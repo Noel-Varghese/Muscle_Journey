@@ -1,9 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlmodel import SQLModel
+from app.database import engine
+from app.routes import user_routes
 
 app = FastAPI()
 
-# Allow frontend to connect (CORS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -12,6 +14,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 👇 This creates tables automatically if they don't exist
+@app.on_event("startup")
+def on_startup():
+    SQLModel.metadata.create_all(engine)
+
+app.include_router(user_routes.router)
+
 @app.get("/")
-def read_root():
+def root():
     return {"message": "HealthBook API is running!"}
