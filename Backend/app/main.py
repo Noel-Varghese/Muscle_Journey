@@ -2,30 +2,31 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel
 from app.database import engine
-from app.routes import user_routes, auth_routes
+from app.routes import user_routes, auth_routes, protected_routes
 
-# 🚀 Initialize FastAPI app
+# 🚀 FastAPI instance
 app = FastAPI(title="HealthBook API", version="1.0.0")
 
-# 🌐 CORS setup (allows your React frontend to connect)
+# 🌍 CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # you can later replace "*" with your frontend URL for security
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# 🧱 Create all database tables on startup
+# 🧱 Create DB tables
 @app.on_event("startup")
 def on_startup():
     SQLModel.metadata.create_all(engine)
 
-# 🧭 Include route files
+# 🧭 Routers
 app.include_router(user_routes.router)
 app.include_router(auth_routes.router, prefix="/auth")
+app.include_router(protected_routes.router)
 
-# 🏠 Root endpoint
+# 🏠 Root route
 @app.get("/")
 def root():
     return {"message": "HealthBook API is running successfully!"}
