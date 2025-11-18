@@ -10,9 +10,6 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <div className="text-center">
-          <h1 className="text-4xl text-red-500">Tailwind Works!</h1>
-        </div>
         <Routes>
           <Route path="/" element={<LoginForm />} />
           <Route path="/register" element={<RegisterForm />} />
