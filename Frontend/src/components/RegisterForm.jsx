@@ -28,12 +28,12 @@ const RegisterForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      await register(form);
-      nav("/");
-    } catch (error) {
-      alert("Registration failed. Please try again.");
-    }
+  try {
+    await register(form);
+    nav("/");
+  } catch (err) {
+    alert("Registration failed");
+  }
   };
 
   return (
