@@ -3,6 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlmodel import SQLModel
 from app.database import engine
 from app.routes import user_routes, auth_routes, protected_routes
+from app.routes import post_routes
+from app.models.like_model import Like
+from app.models.comment_model import Comment
+from app.routes import friend_routes
 
 app = FastAPI(title="HealthBook API", version="2.0.0")
 
@@ -24,6 +28,9 @@ def on_startup():
 app.include_router(user_routes.router)
 app.include_router(auth_routes.router, prefix="/auth")
 app.include_router(protected_routes.router)
+app.include_router(post_routes.router)
+app.include_router(friend_routes.router)
+
 
 @app.get("/")
 def root():
