@@ -1,16 +1,20 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 from typing import List
+
 from app.models.post_model import Post
 from app.models.user_model import User
+from app.models.like_model import Like
+from app.models.comment_model import Comment
+
 from app.database import get_session
 from app.utils.auth_utils import get_current_user
-from pydantic import BaseModel
-from app.models.like_model import Like
 
+from pydantic import BaseModel
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
+# ---------- Post Create ----------
 class PostCreate(BaseModel):
     content: str
 
@@ -23,6 +27,7 @@ def create_post(post_data: PostCreate, session: Session = Depends(get_session), 
     return post
 
 
+# ---------- Feed ----------
 @router.get("/feed", response_model=List[Post])
 def get_feed(session: Session = Depends(get_session), user: User = Depends(get_current_user)):
     statement = select(Post).order_by(Post.created_at.desc())
@@ -30,6 +35,7 @@ def get_feed(session: Session = Depends(get_session), user: User = Depends(get_c
     return feed
 
 
+# ---------- Single Post ----------
 @router.get("/{post_id}", response_model=Post)
 def get_post(post_id: int, session: Session = Depends(get_session)):
     post = session.get(Post, post_id)
@@ -38,6 +44,7 @@ def get_post(post_id: int, session: Session = Depends(get_session)):
     return post
 
 
+# ---------- Delete Post ----------
 @router.delete("/{post_id}")
 def delete_post(post_id: int, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
     post = session.get(Post, post_id)
@@ -47,9 +54,10 @@ def delete_post(post_id: int, session: Session = Depends(get_session), user: Use
     session.commit()
     return {"message": "Post deleted successfully"}
 
+
+# ---------- Likes ----------
 @router.post("/{post_id}/like")
 def like_post(post_id: int, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
-    # Check if already liked
     existing_like = session.exec(
         select(Like).where(Like.post_id == post_id, Like.user_id == user.id)
     ).first()
@@ -81,3 +89,37 @@ def unlike_post(post_id: int, session: Session = Depends(get_session), user: Use
 def get_post_likes(post_id: int, session: Session = Depends(get_session)):
     likes = session.exec(select(Like).where(Like.post_id == post_id)).all()
     return {"likes_count": len(likes)}
+
+
+# ---------- Comments ----------
+class CommentCreate(BaseModel):
+    content: str
+
+@router.post("/{post_id}/comment")
+def add_comment(post_id: int, comment_data: CommentCreate, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
+    comment = Comment(content=comment_data.content, user_id=user.id, post_id=post_id)
+    session.add(comment)
+    session.commit()
+    session.refresh(comment)
+    return comment
+
+
+@router.get("/{post_id}/comments")
+def get_comments(post_id: int, session: Session = Depends(get_session)):
+    comments = session.exec(select(Comment).where(Comment.post_id == post_id)).all()
+    return comments
+
+
+@router.delete("/comment/{comment_id}")
+def delete_comment(comment_id: int, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
+    comment = session.get(Comment, comment_id)
+
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+
+    if comment.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Not allowed")
+
+    session.delete(comment)
+    session.commit()
+    return {"message": "Comment deleted"}
