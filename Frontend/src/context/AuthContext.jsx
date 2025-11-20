@@ -29,15 +29,20 @@ export const AuthProvider = ({ children }) => {
   }, [user]);
 
   const login = async (email, password) => {
-    const res = await axios.post("http://localhost:8000/auth/login", {
-      email,
-      password,
-    });
+  const res = await axios.post("http://localhost:8000/auth/login", {
+    email,
+    password,
+  });
 
-    const access = res.data.access_token;
-    setToken(access);
-    setUser({ email });
-  };
+  const access = res.data.access_token;
+  setToken(access);
+
+  // Fetch full user data
+  const userRes = await axios.get(`http://localhost:8000/users/${email}`);
+
+  setUser(userRes.data);
+};
+
 
   const register = async (data) => {
     await axios.post("http://localhost:8000/auth/register", data);
