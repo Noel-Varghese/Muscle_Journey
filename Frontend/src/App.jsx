@@ -1,41 +1,48 @@
 import { Routes, Route } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
-
+import Friends from "./pages/Friends";
 import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
-import Profile from "./pages/Profile"; 
+import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";   // ✅ FIXED
 
 function App() {
   return (
-    <AuthProvider>
-      {/* We REMOVED <BrowserRouter> here because it is already in your main.jsx */}
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<LoginForm />} />
-        <Route path="/register" element={<RegisterForm />} />
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<LoginForm />} />
+      <Route path="/register" element={<RegisterForm />} />
 
-        {/* Protected Routes */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          }
-        />
-        
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-      </Routes>
-    </AuthProvider>
+      {/* Protected Routes */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <Profile />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/edit-profile"
+        element={
+          <ProtectedRoute>
+            <EditProfile />
+          </ProtectedRoute>
+        }
+      />
+      <Route path="/friends" element={<ProtectedRoute><Friends /></ProtectedRoute>} />
+    </Routes>
   );
 }
 
