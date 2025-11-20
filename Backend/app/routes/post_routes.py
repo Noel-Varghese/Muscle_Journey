@@ -1,20 +1,21 @@
-from fastapi import APIRouter, Depends, HTTPException
+# backend/app/routes/post_routes.py
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlmodel import Session, select
 from typing import List
+import cloudinary.uploader
 
 from app.models.post_model import Post
 from app.models.user_model import User
 from app.models.like_model import Like
 from app.models.comment_model import Comment
-
 from app.database import get_session
 from app.utils.auth_utils import get_current_user
-
 from pydantic import BaseModel
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
-# ---------- Post Create ----------
+
+# ---------- Post Create (text-only) ----------
 class PostCreate(BaseModel):
     content: str
 
@@ -123,3 +124,29 @@ def delete_comment(comment_id: int, session: Session = Depends(get_session), use
     session.delete(comment)
     session.commit()
     return {"message": "Comment deleted"}
+
+
+# ---------- Create Post WITH optional image ----------
+@router.post("/create", response_model=Post)
+async def create_post_with_image(
+    content: str = Form(...),
+    file: UploadFile = File(None),
+    session: Session = Depends(get_session),
+    user: User = Depends(get_current_user)
+):
+    image_url = None
+
+    # Upload image to Cloudinary if provided
+    if file:
+        try:
+            upload = cloudinary.uploader.upload(file.file)
+            image_url = upload.get("secure_url")
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+    post = Post(content=content, user_id=user.id, image_url=image_url)
+    session.add(post)
+    session.commit()
+    session.refresh(post)
+
+    return post

@@ -13,13 +13,13 @@ const LoginForm = () => {
   const nav = useNavigate();
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      await login(email, password);
-      nav("/dashboard");
-    } catch {
-      alert("Invalid credentials");
-    }
+  e.preventDefault();
+  try {
+    await login(email, password);
+    nav("/dashboard");
+  } catch (err) {
+    alert("Invalid login");
+  }
   };
 
   return (
