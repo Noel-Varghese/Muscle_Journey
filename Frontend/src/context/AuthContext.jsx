@@ -10,6 +10,7 @@ export const AuthProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : null;
   });
 
+  // Keep axios Authorization automatically updated
   useEffect(() => {
     if (token) {
       localStorage.setItem("token", token);
@@ -20,6 +21,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [token]);
 
+  // Sync user to localStorage
   useEffect(() => {
     if (user) {
       localStorage.setItem("user", JSON.stringify(user));
@@ -28,33 +30,43 @@ export const AuthProvider = ({ children }) => {
     }
   }, [user]);
 
+  // LOGIN
   const login = async (email, password) => {
-  const res = await axios.post("http://localhost:8000/auth/login", {
-    email,
-    password,
-  });
+    const res = await axios.post("http://localhost:8000/auth/login", {
+      email,
+      password,
+    });
 
-  const access = res.data.access_token;
-  setToken(access);
+    const access = res.data.access_token;
+    setToken(access);
 
-  // Fetch full user data
-  const userRes = await axios.get(`http://localhost:8000/users/${email}`);
+    // Fetch the full user info
+    const userRes = await axios.get(`http://localhost:8000/users/${email}`);
+    setUser(userRes.data);
+  };
 
-  setUser(userRes.data);
-};
-
-
+  // REGISTER
   const register = async (data) => {
     await axios.post("http://localhost:8000/auth/register", data);
   };
 
+  // LOGOUT
   const logout = () => {
     setToken(null);
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        login,
+        register,
+        logout,
+        setUser, // IMPORTANT: so EditProfile and AvatarUpload can update instantly
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
