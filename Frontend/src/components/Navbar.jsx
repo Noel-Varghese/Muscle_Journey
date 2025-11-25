@@ -24,24 +24,21 @@ const Navbar = () => {
             </span>
           </Link>
 
-          {/* NAV LINKS */}
+          {/* NAVIGATION LINKS */}
           <div className="hidden md:flex space-x-8 items-center">
-            {["Feed", "Friends", "Workouts", "Profile"].map((item) => (
-              <Link
-                key={item}
-                to={`/${item.toLowerCase()}`}
-                className="text-gray-400 hover:text-teal-400 font-bold text-sm uppercase tracking-widest transition"
-              >
-                {item}
-              </Link>
-            ))}
+            <Link to="/dashboard" className="nav-link">Home</Link>
+            <Link to="/feed" className="nav-link">Feed</Link>
+            <Link to="/friends" className="nav-link">Friends</Link>
+            <Link to="/profile" className="nav-link">Profile</Link>
           </div>
 
-          {/* USER INFO */}
+          {/* USER SECTION */}
           <div className="flex items-center gap-4">
+
             {user && (
               <div className="flex items-center gap-3 pl-4 border-l border-gray-800">
-                
+
+                {/* USER TEXT */}
                 <div className="text-right hidden sm:block">
                   <p className="text-sm font-bold text-white leading-none">
                     {user.username}
@@ -51,7 +48,7 @@ const Navbar = () => {
                   </p>
                 </div>
 
-                {/* AVATAR */}
+                {/* AVATAR - FIXED */}
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-teal-500">
                   {user.avatar_url ? (
                     <img
@@ -65,28 +62,16 @@ const Navbar = () => {
                     </div>
                   )}
                 </div>
+
               </div>
             )}
 
-            {/* LOGOUT */}
+            {/* LOGOUT BUTTON */}
             <button
               onClick={handleLogout}
-              className="text-gray-500 hover:text-red-500 transition"
+              className="text-gray-500 hover:text-red-500 transition text-xl"
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6A2.25 2.25 0 005.25 5.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75"
-                />
-              </svg>
+              ⎋
             </button>
 
           </div>

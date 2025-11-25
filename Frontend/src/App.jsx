@@ -1,48 +1,82 @@
+// frontend/src/App.jsx
 import { Routes, Route } from "react-router-dom";
-import Friends from "./pages/Friends";
+import { AuthProvider } from "./context/AuthContext";
+
 import LoginForm from "./components/LoginForm";
 import RegisterForm from "./components/RegisterForm";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/Profile";
-import EditProfile from "./pages/EditProfile";   // ✅ FIXED
+import EditProfile from "./pages/EditProfile";
+import Friends from "./pages/Friends";
+import FriendProfile from "./pages/FriendProfile";
 
 function App() {
   return (
-    <Routes>
-      {/* Public Routes */}
-      <Route path="/" element={<LoginForm />} />
-      <Route path="/register" element={<RegisterForm />} />
+    <AuthProvider>
+      <Routes>
+        {/* PUBLIC */}
+        <Route path="/" element={<LoginForm />} />
+        <Route path="/register" element={<RegisterForm />} />
 
-      {/* Protected Routes */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <Dashboard />
-          </ProtectedRoute>
-        }
-      />
+        {/* PROTECTED */}
+        <Route
+          path="/dashboard"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <Profile />
-          </ProtectedRoute>
-        }
-      />
+        {/* FEED (same as Dashboard for now) */}
+        <Route
+          path="/feed"
+          element={
+            <ProtectedRoute>
+              <Dashboard />
+            </ProtectedRoute>
+          }
+        />
 
-      <Route
-        path="/edit-profile"
-        element={
-          <ProtectedRoute>
-            <EditProfile />
-          </ProtectedRoute>
-        }
-      />
-      <Route path="/friends" element={<ProtectedRoute><Friends /></ProtectedRoute>} />
-    </Routes>
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/edit-profile"
+          element={
+            <ProtectedRoute>
+              <EditProfile />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* FRIEND SYSTEM */}
+        <Route
+          path="/friends"
+          element={
+            <ProtectedRoute>
+              <Friends />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/friend/:id"
+          element={
+            <ProtectedRoute>
+              <FriendProfile />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </AuthProvider>
   );
 }
 
