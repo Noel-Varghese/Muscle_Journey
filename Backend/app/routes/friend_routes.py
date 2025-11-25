@@ -1,101 +1,210 @@
+# backend/app/routes/friend_routes.py
 from fastapi import APIRouter, Depends, HTTPException
-from sqlmodel import Session, select
-from typing import List, Dict
+from sqlmodel import Session, select, or_, not_
+from typing import List
+
 from app.database import get_session
-from app.models.follow_model import Follow
 from app.models.user_model import User
+from app.models.friendship_model import Friendship
 from app.utils.auth_utils import get_current_user
 
 router = APIRouter(prefix="/friends", tags=["Friends"])
 
-# follow a user (current_user -> target_user)
-@router.post("/{target_user_id}/follow")
-def follow_user(target_user_id: int, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
-    if user.id == target_user_id:
-        raise HTTPException(status_code=400, detail="Cannot follow yourself")
 
-    # check exists
-    exists = session.exec(
-        select(Follow).where(Follow.follower_id == user.id, Follow.following_id == target_user_id)
+# ---------- HELPERS ----------
+
+def _friendship_exists(session: Session, user_id: int, other_id: int) -> Friendship | None:
+    """Return existing Friendship row between two users in any direction."""
+    return session.exec(
+        select(Friendship).where(
+            or_(
+                (Friendship.requester_id == user_id) & (Friendship.receiver_id == other_id),
+                (Friendship.requester_id == other_id) & (Friendship.receiver_id == user_id),
+            )
+        )
     ).first()
-    if exists:
-        raise HTTPException(status_code=400, detail="Already following")
 
-    # ensure target exists
-    target = session.get(User, target_user_id)
+
+# ---------- SUGGESTIONS ----------
+
+@router.get("/suggestions")
+def get_friend_suggestions(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Show users that:
+    - are not you
+    - have NO friendship row (pending or accepted) with you
+    """
+    # all friendship rows involving me
+    my_links: List[Friendship] = session.exec(
+        select(Friendship).where(
+            or_(
+                Friendship.requester_id == current_user.id,
+                Friendship.receiver_id == current_user.id,
+            )
+        )
+    ).all()
+
+    # collect all user_ids I already have some relation with
+    excluded_ids = {current_user.id}
+    for f in my_links:
+        excluded_ids.add(f.requester_id)
+        excluded_ids.add(f.receiver_id)
+
+    # get users NOT in excluded_ids
+    suggestions = session.exec(
+        select(User).where(not_(User.id.in_(excluded_ids)))
+    ).all()
+
+    return [
+        {
+            "id": u.id,
+            "username": u.username,
+            "avatar_url": getattr(u, "avatar_url", None),
+            "bmi": getattr(u, "bmi", None),
+        }
+        for u in suggestions
+    ]
+
+
+# ---------- SEND FRIEND REQUEST ----------
+
+@router.post("/add/{target_id}")
+def send_friend_request(
+    target_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    if target_id == current_user.id:
+        raise HTTPException(status_code=400, detail="You cannot add yourself")
+
+    target = session.get(User, target_id)
     if not target:
-        raise HTTPException(status_code=404, detail="Target user not found")
+        raise HTTPException(status_code=404, detail="User not found")
 
-    follow = Follow(follower_id=user.id, following_id=target_user_id)
-    session.add(follow)
+    existing = _friendship_exists(session, current_user.id, target_id)
+    if existing:
+        if existing.status == "accepted":
+            raise HTTPException(status_code=400, detail="You are already friends")
+        else:
+            raise HTTPException(status_code=400, detail="Friend request already exists")
+
+    friendship = Friendship(
+        requester_id=current_user.id,
+        receiver_id=target_id,
+        status="pending",
+    )
+    session.add(friendship)
     session.commit()
-    session.refresh(follow)
-    return {"message": "Followed", "follow_id": follow.id}
+    session.refresh(friendship)
 
-# unfollow
-@router.delete("/{target_user_id}/unfollow")
-def unfollow_user(target_user_id: int, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
-    rel = session.exec(
-        select(Follow).where(Follow.follower_id == user.id, Follow.following_id == target_user_id)
-    ).first()
-    if not rel:
-        raise HTTPException(status_code=404, detail="Follow relation not found")
-    session.delete(rel)
+    return {"message": "Friend request sent", "friendship_id": friendship.id}
+
+
+# ---------- INCOMING REQUESTS ----------
+
+@router.get("/requests")
+def get_incoming_requests(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Requests RECEIVED by me (I'm the receiver, status=pending)
+    """
+    rows = session.exec(
+        select(Friendship, User)
+        .join(User, User.id == Friendship.requester_id)
+        .where(
+            Friendship.receiver_id == current_user.id,
+            Friendship.status == "pending",
+        )
+    ).all()
+
+    return [
+        {
+            "friendship_id": f.id,
+            "from_user_id": u.id,
+            "from_username": u.username,
+            "avatar_url": getattr(u, "avatar_url", None),
+        }
+        for (f, u) in rows
+    ]
+
+
+# ---------- FRIEND LIST (ACCEPTED) ----------
+
+@router.get("/list")
+def get_friends(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    links: List[Friendship] = session.exec(
+        select(Friendship).where(
+            Friendship.status == "accepted",
+            or_(
+                Friendship.requester_id == current_user.id,
+                Friendship.receiver_id == current_user.id,
+            ),
+        )
+    ).all()
+
+    friends: list[dict] = []
+
+    for f in links:
+        friend_id = f.receiver_id if f.requester_id == current_user.id else f.requester_id
+        u = session.get(User, friend_id)
+        if not u:
+            continue
+        friends.append(
+            {
+                "id": u.id,
+                "username": u.username,
+                "avatar_url": getattr(u, "avatar_url", None),
+                "bmi": getattr(u, "bmi", None),
+            }
+        )
+
+    return friends
+
+
+# ---------- ACCEPT / REJECT REQUEST ----------
+
+@router.post("/accept/{friendship_id}")
+def accept_request(
+    friendship_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    f = session.get(Friendship, friendship_id)
+    if not f:
+        raise HTTPException(status_code=404, detail="Request not found")
+
+    if f.receiver_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not allowed")
+
+    f.status = "accepted"
+    session.add(f)
     session.commit()
-    return {"message": "Unfollowed"}
+    session.refresh(f)
 
-# list who current user is following
-@router.get("/me/following", response_model=List[Dict])
-def my_following(session: Session = Depends(get_session), user: User = Depends(get_current_user)):
-    rows = session.exec(select(Follow).where(Follow.follower_id == user.id)).all()
-    ids = [r.following_id for r in rows]
-    if not ids:
-        return []
-    users = session.exec(select(User).where(User.id.in_(ids))).all()
-    # return minimal public profile
-    return [{"id": u.id, "username": u.username, "avatar_url": u.avatar_url} for u in users]
+    return {"message": "Friend request accepted"}
 
-# list who follows current user
-@router.get("/me/followers", response_model=List[Dict])
-def my_followers(session: Session = Depends(get_session), user: User = Depends(get_current_user)):
-    rows = session.exec(select(Follow).where(Follow.following_id == user.id)).all()
-    ids = [r.follower_id for r in rows]
-    if not ids:
-        return []
-    users = session.exec(select(User).where(User.id.in_(ids))).all()
-    return [{"id": u.id, "username": u.username, "avatar_url": u.avatar_url} for u in users]
 
-# list following for arbitrary user (public)
-@router.get("/{user_id}/following", response_model=List[Dict])
-def get_following(user_id: int, session: Session = Depends(get_session)):
-    rows = session.exec(select(Follow).where(Follow.follower_id == user_id)).all()
-    ids = [r.following_id for r in rows]
-    users = session.exec(select(User).where(User.id.in_(ids))).all() if ids else []
-    return [{"id": u.id, "username": u.username, "avatar_url": u.avatar_url} for u in users]
+@router.delete("/reject/{friendship_id}")
+def reject_request(
+    friendship_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    f = session.get(Friendship, friendship_id)
+    if not f:
+        raise HTTPException(status_code=404, detail="Request not found")
 
-# list followers for arbitrary user (public)
-@router.get("/{user_id}/followers", response_model=List[Dict])
-def get_followers(user_id: int, session: Session = Depends(get_session)):
-    rows = session.exec(select(Follow).where(Follow.following_id == user_id)).all()
-    ids = [r.follower_id for r in rows]
-    users = session.exec(select(User).where(User.id.in_(ids))).all() if ids else []
-    return [{"id": u.id, "username": u.username, "avatar_url": u.avatar_url} for u in users]
+    if f.receiver_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not allowed")
 
-# check if current user follows given user
-@router.get("/{target_user_id}/is_following")
-def is_following(target_user_id: int, session: Session = Depends(get_session), user: User = Depends(get_current_user)):
-    rel = session.exec(select(Follow).where(Follow.follower_id == user.id, Follow.following_id == target_user_id)).first()
-    return {"is_following": bool(rel)}
-
-# suggestions: users you don't follow (simple)
-@router.get("/me/suggestions", response_model=List[Dict])
-def suggestions(session: Session = Depends(get_session), user: User = Depends(get_current_user)):
-    # get ids current user follows
-    following_rows = session.exec(select(Follow).where(Follow.follower_id == user.id)).all()
-    following_ids = {r.following_id for r in following_rows}
-    # include self to exclude
-    following_ids.add(user.id)
-    # pick some users not in following_ids
-    candidates = session.exec(select(User).where(User.id.not_in(list(following_ids))).limit(20)).all()
-    # return minimal
-    return [{"id": u.id, "username": u.username, "avatar_url": u.avatar_url} for u in candidates]
+    session.delete(f)
+    session.commit()
+    return {"message": "Friend request rejected"}
