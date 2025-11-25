@@ -16,7 +16,7 @@ const PostCard = ({ post }) => {
 
   const username = post.user || post.username;
 
-  // ------ CHECK INITIAL LIKE ------
+  // ---- CHECK IF I LIKED ----
   useEffect(() => {
     const load = async () => {
       try {
@@ -32,7 +32,7 @@ const PostCard = ({ post }) => {
     load();
   }, [post.id, token]);
 
-  // ------ LIKE/UNLIKE POST ------
+  // ---- LIKE / UNLIKE ----
   const toggleLike = async () => {
     try {
       if (!likedPost) {
@@ -56,7 +56,7 @@ const PostCard = ({ post }) => {
     }
   };
 
-  // ------ LOAD COMMENTS ------
+  // ---- LOAD COMMENTS ----
   const loadComments = async () => {
     try {
       const res = await axios.get(
@@ -65,11 +65,11 @@ const PostCard = ({ post }) => {
       );
       setComments(res.data);
     } catch (err) {
-      console.log("Comment load error:", err);
+      console.log(err);
     }
   };
 
-  // ------ ADD COMMENT ------
+  // ---- ADD COMMENT ----
   const submitComment = async () => {
     if (!commentInput.trim()) return;
 
@@ -79,15 +79,16 @@ const PostCard = ({ post }) => {
         { content: commentInput },
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       setCommentInput("");
-      loadComments();
+
+      // reload comments
+      await loadComments();
     } catch (err) {
       console.log(err);
     }
   };
 
-  // ------ LIKE COMMENT ------
+  // ---- LIKE / UNLIKE COMMENT ----
   const toggleCommentLike = async (c) => {
     try {
       if (!c.liked_by_me) {
@@ -121,6 +122,20 @@ const PostCard = ({ post }) => {
     }
   };
 
+  // ---- DELETE COMMENT ----
+  const deleteComment = async (id) => {
+    try {
+      await axios.delete(
+        `http://localhost:8000/posts/comment/${id}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      await loadComments();
+    } catch (err) {
+      console.log("Delete comment error:", err);
+    }
+  };
+
   return (
     <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
 
@@ -149,7 +164,6 @@ const PostCard = ({ post }) => {
         />
       )}
 
-      {/* CONTENT */}
       <p className="text-gray-300 mb-4">{post.content}</p>
 
       {/* ACTION BAR */}
@@ -163,6 +177,7 @@ const PostCard = ({ post }) => {
           {likedPost ? "❤️" : "🤍"} {likesCount}
         </button>
 
+        {/* ⭐ FIXED COMMENT COUNT ⭐ */}
         <button
           onClick={() => {
             setShowComments((v) => !v);
@@ -199,6 +214,15 @@ const PostCard = ({ post }) => {
                     {c.liked_by_me ? "❤️" : "🤍"} {c.likes_count}
                   </button>
                 </div>
+
+                {c.user_id === user.id && (
+                  <button
+                    onClick={() => deleteComment(c.id)}
+                    className="text-red-500 text-xs hover:text-red-700"
+                  >
+                    Delete
+                  </button>
+                )}
               </div>
             ))}
 
