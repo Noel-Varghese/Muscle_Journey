@@ -9,6 +9,7 @@ from app.models.comment_model import Comment
 from app.routes import friend_routes
 from app.routes import user_routes, auth_routes, protected_routes, friend_routes
 from app.routes.comment_like_routes import router as comment_like_routes
+from app.routes import workout_routes
 
 app = FastAPI(title="HealthBook API", version="2.0.0")
 
@@ -33,6 +34,7 @@ app.include_router(protected_routes.router)
 app.include_router(post_routes.router)
 app.include_router(comment_like_routes)
 app.include_router(friend_routes.router)
+app.include_router(workout_routes.router)
 
 @app.get("/")
 def root():
