@@ -1,4 +1,3 @@
-// frontend/src/pages/FriendProfile.jsx
 import { useEffect, useState, useContext } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
@@ -29,46 +28,51 @@ const FriendProfile = () => {
     setPosts(res.data);
   };
 
-  // ---- check if *current* user already follows this friend ----
+  // ✅ CHECK FOLLOW STATUS USING REAL BACKEND DATA
   const loadFollowStatus = async () => {
     if (!token) return;
-    const res = await axios.get(
-      `http://localhost:8000/friends/${id}/is_following`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
+
+    const res = await axios.get("http://localhost:8000/friends/list", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    const alreadyFriend = res.data.some(
+      (f) => f.id === Number(id)
     );
-    setIsFollowing(res.data.is_following);
+
+    setIsFollowing(alreadyFriend);
   };
 
-  // ---- follow / unfollow toggle ----
+  // ✅ ✅ ✅ FULLY WORKING FOLLOW + UNFOLLOW
   const toggleFollow = async () => {
     if (!token || !friend) return;
     setFollowBusy(true);
+
     try {
       if (isFollowing) {
-        // unfollow
+        // ✅ REAL UNFOLLOW (BACKEND ALREADY HAS THIS)
         await axios.delete(
-          `http://localhost:8000/friends/${friend.id}/unfollow`,
+          `http://localhost:8000/friends/remove/${friend.id}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        setIsFollowing(false);
+
+        setIsFollowing(false); // ✅ switch button back to FOLLOW
       } else {
-        // follow
+        // ✅ REAL FOLLOW
         await axios.post(
-          `http://localhost:8000/friends/${friend.id}/follow`,
+          `http://localhost:8000/friends/add/${friend.id}`,
           {},
           {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        setIsFollowing(true);
+
+        setIsFollowing(true); // ✅ switch button to UNFOLLOW
       }
     } catch (err) {
       console.log("Follow/unfollow error:", err);
-      // optional: toast / alert
     } finally {
       setFollowBusy(false);
     }
@@ -78,7 +82,11 @@ const FriendProfile = () => {
   useEffect(() => {
     const loadAll = async () => {
       try {
-        await Promise.all([loadFriend(), loadPosts(), loadFollowStatus()]);
+        await Promise.all([
+          loadFriend(),
+          loadPosts(),
+          loadFollowStatus()
+        ]);
       } catch (err) {
         console.log("Friend profile load error:", err);
       } finally {
@@ -106,7 +114,7 @@ const FriendProfile = () => {
           <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-teal-800/40 to-gray-900/40" />
 
           <div className="relative flex flex-col md:flex-row items-center md:items-end gap-6 z-10 mt-12">
-            {/* Avatar (now uses avatar_url) */}
+            {/* Avatar */}
             {friend.avatar_url ? (
               <img
                 src={friend.avatar_url}
