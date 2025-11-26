@@ -9,6 +9,9 @@ import Profile from "./pages/Profile";
 import EditProfile from "./pages/EditProfile";
 import Friends from "./pages/Friends";
 import FriendProfile from "./pages/FriendProfile";
+import WorkoutLog from "./pages/WorkoutLog";
+import MyWorkouts from "./pages/MyWorkouts";
+import LogWorkout from "./pages/LogWorkout";
 import Feed from "./pages/Feed"; // ✅ ADD THIS
 
 function App() {
@@ -71,6 +74,24 @@ function App() {
           element={
             <ProtectedRoute>
               <FriendProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/workout-log"
+          element={
+            <ProtectedRoute>
+              <WorkoutLog />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/log-workout" element={<ProtectedRoute><LogWorkout /></ProtectedRoute>} />
+
+        <Route
+          path="/my-workouts"
+          element={
+            <ProtectedRoute>
+              <MyWorkouts />
             </ProtectedRoute>
           }
         />
