@@ -1,3 +1,4 @@
+// frontend/src/components/PostCard.jsx
 import { useState, useContext, useEffect } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
@@ -14,7 +15,14 @@ const PostCard = ({ post }) => {
   const [comments, setComments] = useState([]);
   const [commentInput, setCommentInput] = useState("");
 
-  const username = post.user || post.username;
+  const username = post.user || post.username || "User";
+
+  // 👉 detect if media is video based on extension
+  const isVideo =
+    post.image_url &&
+    [".mp4", ".webm", ".ogg"].some((ext) =>
+      post.image_url.toLowerCase().includes(ext)
+    );
 
   // ---- CHECK IF I LIKED ----
   useEffect(() => {
@@ -80,8 +88,6 @@ const PostCard = ({ post }) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setCommentInput("");
-
-      // reload comments
       await loadComments();
     } catch (err) {
       console.log(err);
@@ -129,7 +135,6 @@ const PostCard = ({ post }) => {
         `http://localhost:8000/posts/comment/${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       await loadComments();
     } catch (err) {
       console.log("Delete comment error:", err);
@@ -138,7 +143,6 @@ const PostCard = ({ post }) => {
 
   return (
     <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
-
       {/* HEADER */}
       <div
         className="flex items-center gap-3 mb-4 cursor-pointer"
@@ -156,14 +160,26 @@ const PostCard = ({ post }) => {
         </div>
       </div>
 
-      {/* IMAGE */}
+      {/* MEDIA (IMAGE OR VIDEO) */}
       {post.image_url && (
-        <img
-          src={post.image_url}
-          className="w-full rounded-xl mb-4 shadow-lg"
-        />
+        <div className="w-full rounded-xl mb-4 overflow-hidden shadow-lg bg-black">
+          {isVideo ? (
+            <video
+              src={post.image_url}
+              controls
+              className="w-full max-h-96 object-contain"
+            />
+          ) : (
+            <img
+              src={post.image_url}
+              className="w-full max-h-96 object-cover"
+              alt="post media"
+            />
+          )}
+        </div>
       )}
 
+      {/* TEXT CONTENT */}
       <p className="text-gray-300 mb-4">{post.content}</p>
 
       {/* ACTION BAR */}
@@ -177,7 +193,6 @@ const PostCard = ({ post }) => {
           {likedPost ? "❤️" : "🤍"} {likesCount}
         </button>
 
-        {/* ⭐ FIXED COMMENT COUNT ⭐ */}
         <button
           onClick={() => {
             setShowComments((v) => !v);
@@ -193,7 +208,6 @@ const PostCard = ({ post }) => {
       {showComments && (
         <div className="mt-4 bg-gray-900 border border-gray-700 p-4 rounded-xl">
           <div className="max-h-64 overflow-y-auto space-y-3">
-
             {comments.map((c) => (
               <div
                 key={c.id}
@@ -225,7 +239,6 @@ const PostCard = ({ post }) => {
                 )}
               </div>
             ))}
-
           </div>
 
           <div className="flex gap-2 mt-3">
@@ -242,7 +255,6 @@ const PostCard = ({ post }) => {
               Post
             </button>
           </div>
-
         </div>
       )}
     </div>

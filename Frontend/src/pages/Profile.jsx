@@ -12,33 +12,39 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
 
   // ------------------------------------
-  // LOAD USER INFO + USER POSTS
+  // LOAD USER INFO + USER POSTS ✅ FIXED
   // ------------------------------------
   useEffect(() => {
     const loadInfo = async () => {
       try {
-        // Get user details
+        // ✅ Get user details
         const resUser = await axios.get(
           `http://localhost:8000/users/${user.email}`
         );
         setUserInfo(resUser.data);
 
-        // Get ALL posts
-        const resPosts = await axios.get("http://localhost:8000/posts/feed");
-
-        // Filter user-specific posts
-        const filtered = resPosts.data.filter(
-          (p) => p.user_id === resUser.data.id
+        // ✅ FIX: Get ONLY this user's posts (not full feed)
+        const resPosts = await axios.get(
+          `http://localhost:8000/posts/user/${resUser.data.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
         );
 
+        // ✅ FIX: Keep backend field names EXACTLY as-is
         setMyPosts(
-          filtered.map((p) => ({
+          resPosts.data.map((p) => ({
             id: p.id,
-            user: resUser.data.username,
-            tag: "Progress",
-            time: new Date(p.created_at).toLocaleString(),
+            user: p.username,
+            user_id: p.user_id,                 // ✅ FIX: needed for PostCard routing
             content: p.content,
-            likes: p.likes || 0,
+            created_at: p.created_at,           // ✅ FIX: PostCard needs this
+            image_url: p.image_url,             // ✅ FIX: image support
+            avatar_url: p.avatar_url,           // ✅ FIX: avatar support
+            likes_count: p.likes_count || 0,    // ✅ FIX: CORRECT FIELD
+            comments_count: p.comments_count || 0, // ✅ FIX: CORRECT FIELD
           }))
         );
       } catch (err) {
@@ -92,7 +98,6 @@ const Profile = () => {
                 {userInfo.username}
               </h1>
 
-              {/* BIO — FIXED + SHOWING */}
               <p className="text-gray-400 mt-3 italic">
                 {userInfo.bio ? userInfo.bio : "No bio added yet."}
               </p>

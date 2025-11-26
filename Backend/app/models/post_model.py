@@ -9,6 +9,6 @@ class Post(SQLModel, table=True):
     user_id: int = Field(foreign_key="user.id")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     image_url: Optional[str] = None
-
+    media_type: Optional[str] = None
     # optional backref (user_model should define posts relationship)
     user: Optional["User"] = Relationship(back_populates="posts")
