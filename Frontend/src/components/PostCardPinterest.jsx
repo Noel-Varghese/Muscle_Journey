@@ -1,14 +1,30 @@
 const PostCardPinterest = ({ post, onOpen }) => {
+  // ✅ detect if it's a video from URL
+  const isVideo =
+    post.image_url &&
+    [".mp4", ".webm", ".ogg"].some((ext) =>
+      post.image_url.toLowerCase().includes(ext)
+    );
+
   return (
     <div
       onClick={onOpen}
       className="relative mb-4 break-inside-avoid cursor-pointer rounded-2xl overflow-hidden group"
     >
-      {/* IMAGE */}
-      <img
-        src={post.image_url}
-        className="w-full object-cover rounded-2xl transition group-hover:scale-105"
-      />
+      {/* ✅ IMAGE OR VIDEO */}
+      {isVideo ? (
+        <video
+          src={post.image_url}
+          className="w-full object-cover rounded-2xl transition group-hover:scale-105"
+          muted
+          playsInline
+        />
+      ) : (
+        <img
+          src={post.image_url}
+          className="w-full object-cover rounded-2xl transition group-hover:scale-105"
+        />
+      )}
 
       {/* OVERLAY */}
       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex flex-col justify-end p-3">
