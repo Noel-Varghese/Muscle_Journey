@@ -26,18 +26,10 @@ const Navbar = () => {
 
           {/* NAVIGATION LINKS */}
           <div className="hidden md:flex space-x-8 items-center">
-            <Link to="/dashboard" className="text-gray-400 hover:text-teal-400 font-bold transition">
-              Home
-            </Link>
-            <Link to="/feed" className="text-gray-400 hover:text-teal-400 font-bold transition">
-              Feed
-            </Link>
-            <Link to="/friends" className="text-gray-400 hover:text-teal-400 font-bold transition">
-              Friends
-            </Link>
-            <Link to="/profile" className="text-gray-400 hover:text-teal-400 font-bold transition">
-              Profile
-            </Link>
+            <Link to="/dashboard" className="nav-link">Home</Link>
+            <Link to="/feed" className="nav-link">Feed</Link>
+            <Link to="/friends" className="nav-link">Friends</Link>
+            <Link to="/profile" className="nav-link">Profile</Link>
           </div>
 
           {/* USER SECTION */}
@@ -56,11 +48,11 @@ const Navbar = () => {
                   </p>
                 </div>
 
-                {/* AVATAR (CACHE-BUST FIX ✅) */}
+                {/* AVATAR - FIXED */}
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-teal-500">
                   {user.avatar_url ? (
                     <img
-                      src={`${user.avatar_url}?t=${Date.now()}`}
+                      src={user.avatar_url}
                       alt="avatar"
                       className="w-full h-full object-cover"
                     />
