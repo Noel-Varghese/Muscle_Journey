@@ -1,34 +1,169 @@
-🩺 HealthBook
+🏋️‍♂️ HealthJourn – Social Fitness Journal
 
-A social health platform — think of it like Facebook, but for your health journey.
-Create your profile, calculate your BMI, post health updates, and connect with others working toward better wellness. 🚀
+HealthJourn is a full-stack social fitness journaling platform where users can track workouts, share progress, interact through posts, follow friends, and build healthy habits together.
+Built with FastAPI + React, this project focuses on performance, clean UI, and real-world social features.
 
-✨ Features
+🚀 Features
+✅ Authentication
 
-👤 User Profiles – Sign up with your email (or Google login soon!) and add your height, weight, and age.
+Secure JWT-based login & registration
 
-📊 BMI Calculator – Automatically calculates and stores your Body Mass Index.
+Protected routes
 
-📝 Health Posts – (coming soon) Share updates, progress, or tips with your community.
+Persistent sessions
 
-🔒 Authentication – Secure login system (JWT tokens or Google OAuth).
+✅ User Profile
 
-🗄️ SQLite/SQLModel backend – Lightweight DB in development, can scale to PostgreSQL in production.
+Edit profile details
 
-⚡ FastAPI + React (Vite) – Modern full-stack architecture, fast and developer-friendly.
+Upload profile picture with Cloudinary
 
-🛠️ Tech Stack
+Instant UI updates
+
+✅ Posts System
+
+Create text, image, video, and GIF posts
+
+Like & unlike posts
+
+Delete your own posts
+
+✅ Comments System
+
+Add & delete comments
+
+Like & unlike comments
+
+Live comment count updates
+
+✅ Social Feed
+
+Instagram-style vertical feed
+
+Pinterest-style masonry feed
+
+Click-to-preview full post (image/video modal)
+
+✅ Friends System
+
+Follow & unfollow users
+
+Friend suggestions
+
+Friend profile view with posts
+
+Accepted friendships system
+
+✅ Workout Log (Private)
+
+Log personal workouts
+
+View your workout history
+
+Private visibility (only you can see)
+
+🛠 Tech Stack
+Frontend:
+
+React
+
+Tailwind CSS
+
+Axios
+
+React Router
+
+Backend:
+
+FastAPI
+
+SQLModel + SQLite
+
+JWT Authentication
+
+Cloudinary (media upload)
+
+📂 Project Structure (Simplified)
+Backend
+backend/
+ ├── app/
+ │   ├── models/
+ │   ├── routes/
+ │   ├── utils/
+ │   ├── database.py
+ │   └── main.py
+ └── venv/
 
 Frontend
+frontend/
+ ├── src/
+ │   ├── components/
+ │   ├── pages/
+ │   ├── context/
+ │   ├── App.jsx
+ │   └── main.jsx
 
-React + Vite ⚛️
+⚙️ Setup Instructions
+🔹 Backend Setup
+cd backend
+python -m venv venv
+source venv/bin/activate  # (Windows: venv\Scripts\activate)
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 
-Axios for API requests
+🔹 Frontend Setup
+cd frontend
+npm install
+npm run dev
 
-Backend
+🌐 Environment Variables
 
-FastAPI 🚀
+Create a .env file in the backend:
 
-SQLModel (SQLAlchemy + Pydantic)
+CLOUDINARY_CLOUD_NAME=your_name
+CLOUDINARY_API_KEY=your_key
+CLOUDINARY_API_SECRET=your_secret
+JWT_SECRET_KEY=your_secret_key
 
-SQLite (dev) → PostgreSQL (prod)
+✅ Current Status
+
+✅ Core System: Completed
+✅ Social Features: Completed
+✅ Media Uploads: Completed
+✅ Workout Log: Completed
+🚧 Future Version (Planned):
+
+Calories tracking
+
+AI workout & nutrition suggestions
+
+Progress charts
+
+Public workout sharing
+
+📸 Screenshots
+
+(Add screenshots here later for max GitHub drip)
+
+🧠 Dev Notes
+
+This project was built as a real-world full-stack social fitness app, not just a CRUD demo.
+It includes:
+
+Auth
+
+Upload systems
+
+Social graph (friends)
+
+Feed algorithms
+
+Stateful UI
+
+Secure backend protection
+
+🧑‍💻 Author
+
+Built by Noel
+Engineering Student | Full-Stack Dev | Fitness-Tech Enthusiast 💪
+GitHub: (add your profile link)
