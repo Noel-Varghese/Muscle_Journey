@@ -5,42 +5,48 @@ import Navbar from "../components/Navbar";
 import PostCard from "../components/PostCard";
 
 const Profile = () => {
-  const { user } = useContext(AuthContext);
+  const { user, token } = useContext(AuthContext);
 
   const [userInfo, setUserInfo] = useState(null);
   const [myPosts, setMyPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ------------------------------------
-  // LOAD USER INFO + USER POSTS
-  // ------------------------------------
+  // -------------------------------
+  // LOAD PROFILE + POSTS
+  // -------------------------------
   useEffect(() => {
     const loadInfo = async () => {
       try {
-        // Get user details
+        // ✅ Get full user data
         const resUser = await axios.get(
-          `http://localhost:8000/users/${user.email}`
+          `http://localhost:8000/users/${user.email}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
         setUserInfo(resUser.data);
 
-        // Get ALL posts
-        const resPosts = await axios.get("http://localhost:8000/posts/feed");
-
-        // Filter user-specific posts
-        const filtered = resPosts.data.filter(
-          (p) => p.user_id === resUser.data.id
+        // ✅ Get ONLY this user's posts (not whole feed)
+        const resPosts = await axios.get(
+          `http://localhost:8000/posts/user/${resUser.data.id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
         );
 
-        setMyPosts(
-          filtered.map((p) => ({
-            id: p.id,
-            user: resUser.data.username,
-            tag: "Progress",
-            time: new Date(p.created_at).toLocaleString(),
-            content: p.content,
-            likes: p.likes || 0,
-          }))
-        );
+        // ✅ IMPORTANT: keep likes_count & comments_count
+        const formatted = resPosts.data.map((p) => ({
+          id: p.id,
+          content: p.content,
+          user: p.user || p.username || resUser.data.username,
+          user_id: p.user_id,
+          created_at: p.created_at,
+          likes_count: p.likes_count || 0,
+          comments_count: p.comments_count || 0,
+          image_url: p.image_url || null,
+        }));
+
+        setMyPosts(formatted);
       } catch (err) {
         console.log("Profile load error:", err);
       } finally {
@@ -49,15 +55,14 @@ const Profile = () => {
     };
 
     loadInfo();
-  }, [user.email]);
+  }, [user.email, token]);
 
-  if (loading || !userInfo) {
+  if (loading || !userInfo)
     return (
       <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
         Loading profile...
       </div>
     );
-  }
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100 font-sans">
@@ -65,9 +70,9 @@ const Profile = () => {
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-        {/* ------------------------- */}
-        {/* PROFILE HEADER CARD       */}
-        {/* ------------------------- */}
+        {/* =====================
+            PROFILE HEADER
+        ===================== */}
         <div className="bg-gray-800 rounded-3xl p-8 border border-gray-700 shadow-2xl mb-10 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-teal-900/40 to-gray-900/40"></div>
 
@@ -77,7 +82,6 @@ const Profile = () => {
             {userInfo.avatar_url ? (
               <img
                 src={userInfo.avatar_url}
-                alt="avatar"
                 className="w-32 h-32 rounded-full border-4 border-teal-500 object-cover shadow-xl"
               />
             ) : (
@@ -92,12 +96,7 @@ const Profile = () => {
                 {userInfo.username}
               </h1>
 
-              {/* BIO — FIXED + SHOWING */}
-              <p className="text-gray-400 mt-3 italic">
-                {userInfo.bio ? userInfo.bio : "No bio added yet."}
-              </p>
-
-              <p className="text-teal-400 font-bold uppercase text-sm mt-2">
+              <p className="text-teal-400 font-bold uppercase text-sm mt-1">
                 BMI: {userInfo.bmi}
               </p>
 
@@ -105,9 +104,14 @@ const Profile = () => {
                 Height: {userInfo.height} cm • Weight: {userInfo.weight} kg • Age:{" "}
                 {userInfo.age}
               </p>
+
+              {userInfo.bio && (
+                <p className="text-gray-300 mt-3 italic">
+                  “{userInfo.bio}”
+                </p>
+              )}
             </div>
 
-            {/* EDIT BUTTON */}
             <button
               onClick={() => (window.location.href = "/edit-profile")}
               className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-xl font-bold"
@@ -117,37 +121,19 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* ------------------------- */}
-        {/* POSTS FEED + SIDEBAR      */}
-        {/* ------------------------- */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-
-          {/* LEFT SIDEBAR */}
-          <div className="hidden md:block col-span-1">
-            <div className="bg-gray-800 rounded-3xl p-6 border border-gray-700 sticky top-24">
-              <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-                <span>🏆</span> Personal Stats
-              </h3>
-
-              <div className="space-y-3 text-sm text-gray-300">
-                <p>Height: {userInfo.height} cm</p>
-                <p>Weight: {userInfo.weight} kg</p>
-                <p>Age: {userInfo.age}</p>
-                <p className="text-teal-400 font-bold">BMI: {userInfo.bmi}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* POSTS */}
-          <div className="col-span-2 space-y-6">
-            {myPosts.length === 0 ? (
-              <p className="text-gray-500">No posts yet.</p>
-            ) : (
-              myPosts.map((post) => <PostCard key={post.id} post={post} />)
-            )}
-          </div>
-
+        {/* =====================
+            POSTS SECTION
+        ===================== */}
+        <div className="space-y-6">
+          {myPosts.length === 0 ? (
+            <p className="text-gray-500">No posts yet.</p>
+          ) : (
+            myPosts.map((post) => (
+              <PostCard key={post.id} post={post} />
+            ))
+          )}
         </div>
+
       </main>
     </div>
   );
