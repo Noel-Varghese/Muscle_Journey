@@ -1,4 +1,3 @@
-# backend/app/routes/post_routes.py
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlmodel import Session, select
 from typing import List
@@ -17,14 +16,13 @@ from app.utils.cloudinary_config import cloud_name, api_key, api_secret
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
-# Cloudinary config
+# ✅ Cloudinary config
 cloudinary.config(
     cloud_name=cloud_name,
     api_key=api_key,
     api_secret=api_secret,
     secure=True
 )
-
 
 # ====== SCHEMAS ======
 class PostCreate(BaseModel):
@@ -48,24 +46,37 @@ def create_post(
     return post
 
 
-# ====== CREATE POST WITH OPTIONAL IMAGE ======
+# ====== ✅ CREATE POST WITH IMAGE / GIF / VIDEO ======
 @router.post("/create", response_model=Post)
-async def create_post_with_image(
+async def create_post_with_media(
     content: str = Form(...),
     file: UploadFile | None = File(None),
     session: Session = Depends(get_session),
     user: User = Depends(get_current_user),
 ):
-    image_url = None
+    media_url = None
+    media_type = None
 
     try:
         if file:
-            uploaded = cloudinary.uploader.upload(file.file)
-            image_url = uploaded.get("secure_url")
+            uploaded = cloudinary.uploader.upload(
+                file.file,
+                resource_type="auto"   # ✅ allows image + gif + video
+            )
+            media_url = uploaded.get("secure_url")
+            media_type = uploaded.get("resource_type")
+            if media_url and media_url.endswith(".gif"):
+                media_type = "gif"  # ✅ image | video
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error uploading: {str(e)}")
 
-    post = Post(content=content, user_id=user.id, image_url=image_url)
+    post = Post(
+        content=content,
+        user_id=user.id,
+        image_url=media_url,
+        media_type=media_type,   # ✅ REQUIRED FOR VIDEO SUPPORT
+    )
+
     session.add(post)
     session.commit()
     session.refresh(post)
@@ -96,6 +107,7 @@ def get_feed(
             "username": u.username,
             "avatar_url": u.avatar_url,
             "image_url": post.image_url,
+            "media_type": post.media_type,   # ✅ frontend MUST receive this
             "created_at": post.created_at,
             "likes_count": len(likes),
             "comments_count": len(comments)
@@ -104,7 +116,7 @@ def get_feed(
     return feed
 
 
-# ====== POSTS BY SPECIFIC USER ======
+# ====== POSTS BY USER ======
 @router.get("/user/{user_id}")
 def get_user_posts(
     user_id: int,
@@ -130,21 +142,13 @@ def get_user_posts(
             "username": u.username,
             "avatar_url": u.avatar_url,
             "image_url": post.image_url,
+            "media_type": post.media_type,  # ✅ required
             "created_at": post.created_at,
             "likes_count": len(likes),
             "comments_count": len(comments),
         })
 
     return posts
-
-
-# ====== SINGLE POST ======
-@router.get("/{post_id}", response_model=Post)
-def get_post(post_id: int, session: Session = Depends(get_session)):
-    post = session.get(Post, post_id)
-    if not post:
-        raise HTTPException(status_code=404, detail="Post not found")
-    return post
 
 
 # ====== DELETE POST ======
@@ -206,121 +210,6 @@ def unlike_post(
 ):
     exists = session.exec(
         select(Like).where(Like.post_id == post_id, Like.user_id == user.id)
-    ).first()
-
-    if not exists:
-        raise HTTPException(status_code=404, detail="Like not found")
-
-    session.delete(exists)
-    session.commit()
-    return {"message": "Like removed"}
-
-
-# ====== COMMENTS ======
-@router.post("/{post_id}/comment")
-def add_comment(
-    post_id: int,
-    comment_data: CommentCreate,
-    session: Session = Depends(get_session),
-    user: User = Depends(get_current_user),
-):
-    comment = Comment(content=comment_data.content, user_id=user.id, post_id=post_id)
-    session.add(comment)
-    session.commit()
-    session.refresh(comment)
-    return comment
-
-
-@router.get("/{post_id}/comments")
-def get_comments(
-    post_id: int,
-    session: Session = Depends(get_session),
-    user: User = Depends(get_current_user),
-):
-    comments = session.exec(
-        select(Comment)
-        .where(Comment.post_id == post_id)
-        .order_by(Comment.created_at)
-    ).all()
-
-    result = []
-    for c in comments:
-        likes = session.exec(
-            select(CommentLike).where(CommentLike.comment_id == c.id)
-        ).all()
-
-        liked = session.exec(
-            select(CommentLike).where(
-                CommentLike.comment_id == c.id,
-                CommentLike.user_id == user.id
-            )
-        ).first()
-
-        result.append({
-            "id": c.id,
-            "content": c.content,
-            "user_id": c.user_id,
-            "created_at": c.created_at,
-            "likes_count": len(likes),
-            "liked_by_me": liked is not None
-        })
-
-    return result
-
-
-@router.delete("/comment/{comment_id}")
-def delete_comment(
-    comment_id: int,
-    session: Session = Depends(get_session),
-    user: User = Depends(get_current_user)
-):
-    comment = session.get(Comment, comment_id)
-
-    if not comment:
-        raise HTTPException(status_code=404, detail="Comment not found")
-
-    if comment.user_id != user.id:
-        raise HTTPException(status_code=403, detail="Not allowed")
-
-    session.delete(comment)
-    session.commit()
-    return {"message": "Comment deleted"}
-
-
-# ====== COMMENT LIKE ======
-@router.post("/comments/{comment_id}/like")
-def like_comment(
-    comment_id: int,
-    session: Session = Depends(get_session),
-    user: User = Depends(get_current_user)
-):
-    exists = session.exec(
-        select(CommentLike).where(
-            CommentLike.comment_id == comment_id,
-            CommentLike.user_id == user.id
-        )
-    ).first()
-
-    if exists:
-        raise HTTPException(status_code=400, detail="Already liked")
-
-    like = CommentLike(comment_id=comment_id, user_id=user.id)
-    session.add(like)
-    session.commit()
-    return {"message": "Comment liked"}
-
-
-@router.delete("/comments/{comment_id}/like")
-def unlike_comment(
-    comment_id: int,
-    session: Session = Depends(get_session),
-    user: User = Depends(get_current_user)
-):
-    exists = session.exec(
-        select(CommentLike).where(
-            CommentLike.comment_id == comment_id,
-            CommentLike.user_id == user.id
-        )
     ).first()
 
     if not exists:

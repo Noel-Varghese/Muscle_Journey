@@ -1,4 +1,3 @@
-# backend/app/routes/friend_routes.py
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select, or_, not_
 from typing import List
@@ -32,12 +31,6 @@ def get_friend_suggestions(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    """
-    Show users that:
-    - are not you
-    - have NO friendship row (pending or accepted) with you
-    """
-    # all friendship rows involving me
     my_links: List[Friendship] = session.exec(
         select(Friendship).where(
             or_(
@@ -47,13 +40,11 @@ def get_friend_suggestions(
         )
     ).all()
 
-    # collect all user_ids I already have some relation with
     excluded_ids = {current_user.id}
     for f in my_links:
         excluded_ids.add(f.requester_id)
         excluded_ids.add(f.receiver_id)
 
-    # get users NOT in excluded_ids
     suggestions = session.exec(
         select(User).where(not_(User.id.in_(excluded_ids)))
     ).all()
@@ -69,7 +60,7 @@ def get_friend_suggestions(
     ]
 
 
-# ---------- SEND FRIEND REQUEST ----------
+# ---------- SEND FRIEND REQUEST (FOLLOW) ----------
 
 @router.post("/add/{target_id}")
 def send_friend_request(
@@ -110,9 +101,6 @@ def get_incoming_requests(
     session: Session = Depends(get_session),
     current_user: User = Depends(get_current_user),
 ):
-    """
-    Requests RECEIVED by me (I'm the receiver, status=pending)
-    """
     rows = session.exec(
         select(Friendship, User)
         .join(User, User.id == Friendship.requester_id)
@@ -169,7 +157,7 @@ def get_friends(
     return friends
 
 
-# ---------- ACCEPT / REJECT REQUEST ----------
+# ---------- ACCEPT REQUEST ----------
 
 @router.post("/accept/{friendship_id}")
 def accept_request(
@@ -192,6 +180,8 @@ def accept_request(
     return {"message": "Friend request accepted"}
 
 
+# ---------- REJECT REQUEST ----------
+
 @router.delete("/reject/{friendship_id}")
 def reject_request(
     friendship_id: int,
@@ -208,3 +198,21 @@ def reject_request(
     session.delete(f)
     session.commit()
     return {"message": "Friend request rejected"}
+
+
+# ✅ ✅ ✅ NEW: UNFRIEND / UNFOLLOW ROUTE (NO STRUCTURE CHANGE)
+@router.delete("/remove/{target_id}")
+def remove_friend(
+    target_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    f = _friendship_exists(session, current_user.id, target_id)
+
+    if not f:
+        raise HTTPException(status_code=404, detail="Friendship not found")
+
+    session.delete(f)
+    session.commit()
+
+    return {"message": "Friend removed"}
