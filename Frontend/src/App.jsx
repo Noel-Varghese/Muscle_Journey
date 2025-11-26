@@ -1,4 +1,3 @@
-// frontend/src/App.jsx
 import { Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 
@@ -16,11 +15,11 @@ function App() {
   return (
     <AuthProvider>
       <Routes>
-        {/* PUBLIC */}
+        {/* Public */}
         <Route path="/" element={<LoginForm />} />
         <Route path="/register" element={<RegisterForm />} />
 
-        {/* PROTECTED */}
+        {/* Protected */}
         <Route
           path="/dashboard"
           element={
@@ -30,12 +29,12 @@ function App() {
           }
         />
 
-        {/* FEED (same as Dashboard for now) */}
+        {/* ✅ FEED ROUTE (THIS FIXES YOUR ISSUE) */}
         <Route
           path="/feed"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <Feed />
             </ProtectedRoute>
           }
         />
@@ -58,7 +57,6 @@ function App() {
           }
         />
 
-        {/* FRIEND SYSTEM */}
         <Route
           path="/friends"
           element={
@@ -75,14 +73,6 @@ function App() {
               <FriendProfile />
             </ProtectedRoute>
           }
-        />
-        <Route
-        path="/feed"
-        element={
-          <ProtectedRoute>
-            <Feed/>
-          </ProtectedRoute>
-        }
         />
       </Routes>
     </AuthProvider>

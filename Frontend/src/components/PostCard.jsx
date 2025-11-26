@@ -80,7 +80,43 @@ const PostCard = ({ post }) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setCommentInput("");
+
+      // reload comments
       await loadComments();
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  // ---- LIKE / UNLIKE COMMENT ----
+  const toggleCommentLike = async (c) => {
+    try {
+      if (!c.liked_by_me) {
+        await axios.post(
+          `http://localhost:8000/comments/${c.id}/like`,
+          {},
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      } else {
+        await axios.delete(
+          `http://localhost:8000/comments/${c.id}/like`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+      }
+
+      setComments((prev) =>
+        prev.map((x) =>
+          x.id === c.id
+            ? {
+                ...x,
+                liked_by_me: !x.liked_by_me,
+                likes_count: x.liked_by_me
+                  ? x.likes_count - 1
+                  : x.likes_count + 1,
+              }
+            : x
+        )
+      );
     } catch (err) {
       console.log(err);
     }
@@ -93,14 +129,12 @@ const PostCard = ({ post }) => {
         `http://localhost:8000/posts/comment/${id}`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       await loadComments();
     } catch (err) {
       console.log("Delete comment error:", err);
     }
   };
-
-  // ✅ ✅ ✅ MEDIA TYPE DETECTOR (IMAGE / GIF / VIDEO)
-  const isVideo = post.image_url?.match(/\.(mp4|webm|ogg)$/i);
 
   return (
     <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
@@ -122,22 +156,12 @@ const PostCard = ({ post }) => {
         </div>
       </div>
 
-      {/* ✅ ✅ ✅ MEDIA SECTION (IMAGE / GIF / VIDEO) */}
+      {/* IMAGE */}
       {post.image_url && (
-        <>
-          {isVideo ? (
-            <video
-              src={post.image_url}
-              controls
-              className="w-full rounded-xl mb-4 shadow-lg"
-            />
-          ) : (
-            <img
-              src={post.image_url}
-              className="w-full rounded-xl mb-4 shadow-lg"
-            />
-          )}
-        </>
+        <img
+          src={post.image_url}
+          className="w-full rounded-xl mb-4 shadow-lg"
+        />
       )}
 
       <p className="text-gray-300 mb-4">{post.content}</p>
@@ -153,6 +177,7 @@ const PostCard = ({ post }) => {
           {likedPost ? "❤️" : "🤍"} {likesCount}
         </button>
 
+        {/* ⭐ FIXED COMMENT COUNT ⭐ */}
         <button
           onClick={() => {
             setShowComments((v) => !v);
@@ -168,6 +193,7 @@ const PostCard = ({ post }) => {
       {showComments && (
         <div className="mt-4 bg-gray-900 border border-gray-700 p-4 rounded-xl">
           <div className="max-h-64 overflow-y-auto space-y-3">
+
             {comments.map((c) => (
               <div
                 key={c.id}
@@ -178,6 +204,15 @@ const PostCard = ({ post }) => {
                     {c.user_id === user.id ? "You" : "User"}
                   </p>
                   <p className="text-gray-300">{c.content}</p>
+
+                  <button
+                    onClick={() => toggleCommentLike(c)}
+                    className={`text-xs mt-1 ${
+                      c.liked_by_me ? "text-pink-400" : "text-gray-500"
+                    }`}
+                  >
+                    {c.liked_by_me ? "❤️" : "🤍"} {c.likes_count}
+                  </button>
                 </div>
 
                 {c.user_id === user.id && (
@@ -190,6 +225,7 @@ const PostCard = ({ post }) => {
                 )}
               </div>
             ))}
+
           </div>
 
           <div className="flex gap-2 mt-3">
