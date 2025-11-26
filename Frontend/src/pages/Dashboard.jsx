@@ -92,7 +92,14 @@ const Dashboard = () => {
 
         </div>
       </main>
-
+      <button
+        onClick={() => setOpenModal(true)}
+        className="fixed bottom-10 right-10 bg-teal-600 hover:bg-teal-700 
+                  text-white w-16 h-16 rounded-full shadow-xl 
+                  text-4xl flex items-center justify-center z-50"
+      >
+        +
+      </button>
       <CreatePostModal
         open={openModal}
         onClose={() => setOpenModal(false)}
