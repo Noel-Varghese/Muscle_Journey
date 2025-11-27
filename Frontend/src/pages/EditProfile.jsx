@@ -17,7 +17,6 @@ const EditProfile = () => {
 
   const [loading, setLoading] = useState(true);
 
-  // Load current profile info
   useEffect(() => {
     const loadInfo = async () => {
       try {
@@ -46,7 +45,6 @@ const EditProfile = () => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  // SAVE PROFILE CHANGES
   const saveChanges = async () => {
     try {
       const res = await axios.put(
@@ -58,10 +56,7 @@ const EditProfile = () => {
           },
         }
       );
-
-      // Update user instantly across the app
       setUser(res.data.user);
-
       alert("Profile saved!");
     } catch (err) {
       console.log(err);
@@ -71,76 +66,80 @@ const EditProfile = () => {
 
   if (loading) return <div className="text-white">Loading...</div>;
 
+  const inputClass = "w-full p-3 bg-gray-900/50 border border-gray-600 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all duration-300 text-white";
+
   return (
     <div className="min-h-screen bg-gray-900 text-white">
       <Navbar />
 
       <div className="max-w-3xl mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-8">Edit Profile</h1>
+        <h1 className="text-3xl font-bold mb-8 text-teal-400">Edit Profile</h1>
 
-        <div className="bg-gray-800 p-6 rounded-xl border border-gray-700 space-y-8">
+        <div className="bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-xl space-y-8">
 
           {/* Avatar Upload */}
-          <div>
+          <div className="text-center">
             <h2 className="text-xl font-semibold mb-3">Profile Picture</h2>
-            <AvatarUpload />
+            <div className="inline-block p-1 border-2 border-dashed border-gray-600 rounded-full hover:border-teal-500 transition-colors">
+                 <AvatarUpload />
+            </div>
           </div>
 
           {/* Username */}
           <div>
-            <label className="block text-sm mb-1">Username</label>
+            <label className="block text-sm font-bold text-gray-400 mb-2">Username</label>
             <input
               name="username"
               value={form.username}
               onChange={handleChange}
-              className="w-full p-3 rounded-lg bg-gray-700 text-white outline-none"
+              className={inputClass}
             />
           </div>
 
           {/* Bio */}
           <div>
-            <label className="block text-sm mb-1">Bio</label>
+            <label className="block text-sm font-bold text-gray-400 mb-2">Bio</label>
             <textarea
               name="bio"
               value={form.bio}
               onChange={handleChange}
               rows="4"
-              className="w-full p-3 rounded-lg bg-gray-700 text-white outline-none"
+              className={inputClass}
             />
           </div>
 
           {/* Height + Weight + Age */}
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm mb-1">Height (cm)</label>
+              <label className="block text-sm font-bold text-gray-400 mb-2">Height (cm)</label>
               <input
                 name="height"
                 type="number"
                 value={form.height}
                 onChange={handleChange}
-                className="w-full p-3 rounded-lg bg-gray-700 text-white outline-none"
+                className={inputClass}
               />
             </div>
 
             <div>
-              <label className="block text-sm mb-1">Weight (kg)</label>
+              <label className="block text-sm font-bold text-gray-400 mb-2">Weight (kg)</label>
               <input
                 name="weight"
                 type="number"
                 value={form.weight}
                 onChange={handleChange}
-                className="w-full p-3 rounded-lg bg-gray-700 text-white outline-none"
+                className={inputClass}
               />
             </div>
 
             <div>
-              <label className="block text-sm mb-1">Age</label>
+              <label className="block text-sm font-bold text-gray-400 mb-2">Age</label>
               <input
                 name="age"
                 type="number"
                 value={form.age}
                 onChange={handleChange}
-                className="w-full p-3 rounded-lg bg-gray-700 text-white outline-none"
+                className={inputClass}
               />
             </div>
           </div>
@@ -148,7 +147,7 @@ const EditProfile = () => {
           {/* Save Button */}
           <button
             onClick={saveChanges}
-            className="bg-teal-600 hover:bg-teal-700 px-6 py-3 rounded-lg font-bold w-full"
+            className="bg-gradient-to-r from-teal-600 to-teal-500 hover:shadow-teal-500/30 shadow-lg w-full py-4 rounded-xl font-bold text-lg active:scale-95 transition-all"
           >
             Save Changes
           </button>

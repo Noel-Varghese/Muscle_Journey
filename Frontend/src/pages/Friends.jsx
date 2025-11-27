@@ -1,4 +1,3 @@
-// frontend/src/pages/Friends.jsx
 import { useContext, useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -53,7 +52,6 @@ const Friends = () => {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      // remove from suggestions & reload requests
       await loadAll();
     } catch (err) {
       console.log("Send request error:", err);
@@ -99,29 +97,30 @@ const Friends = () => {
     );
   }
 
+  // Helper class for cards
+  const cardClass = "bg-gray-800/40 border border-gray-700/50 rounded-xl p-4 flex items-center justify-between hover:bg-gray-800 hover:border-teal-500/30 transition-all duration-300 group shadow-lg";
+
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
       <Navbar />
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-10">
+        
         {/* FRIENDS LIST */}
         <section>
-          <h2 className="text-xl font-bold text-white mb-4">
-            Your Friends
+          <h2 className="text-xl font-bold text-teal-400 mb-4 tracking-wide">
+            YOUR FRIENDS
           </h2>
           {friends.length === 0 ? (
-            <p className="text-gray-500 text-sm">
+            <p className="text-gray-500 text-sm italic">
               No friends yet. Send a request from Suggestions below!
             </p>
           ) : (
             <div className="grid sm:grid-cols-2 gap-4">
               {friends.map((f) => (
-                <div
-                  key={f.id}
-                  className="bg-gray-800 border border-gray-700 rounded-xl p-4 flex items-center justify-between"
-                >
+                <div key={f.id} className={cardClass}>
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full overflow-hidden border border-teal-500">
+                    <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-teal-500/50 group-hover:border-teal-400 transition-colors">
                       {f.avatar_url ? (
                         <img
                           src={f.avatar_url}
@@ -129,17 +128,17 @@ const Friends = () => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gray-900 flex items-center justify-center text-white font-bold text-sm">
+                        <div className="w-full h-full bg-gray-700 flex items-center justify-center text-white font-bold text-lg">
                           {f.username[0].toUpperCase()}
                         </div>
                       )}
                     </div>
                     <div>
-                      <p className="font-semibold text-white">
+                      <p className="font-bold text-white text-lg">
                         {f.username}
                       </p>
                       {f.bmi && (
-                        <p className="text-xs text-teal-400">
+                        <p className="text-xs text-teal-400 font-mono">
                           BMI: {f.bmi}
                         </p>
                       )}
@@ -148,9 +147,9 @@ const Friends = () => {
 
                   <button
                     onClick={() => nav(`/friend/${f.id}`)}
-                    className="text-sm bg-teal-600 hover:bg-teal-500 px-3 py-1 rounded-lg text-white"
+                    className="text-sm bg-teal-600/20 hover:bg-teal-600 border border-teal-600/50 hover:text-white text-teal-300 px-4 py-2 rounded-lg transition-all font-semibold"
                   >
-                    View Profile
+                    View
                   </button>
                 </div>
               ))}
@@ -160,8 +159,8 @@ const Friends = () => {
 
         {/* INCOMING REQUESTS */}
         <section>
-          <h2 className="text-xl font-bold text-white mb-4">
-            Friend Requests
+          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            PENDING REQUESTS {requests.length > 0 && <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{requests.length}</span>}
           </h2>
           {requests.length === 0 ? (
             <p className="text-gray-500 text-sm">No pending requests.</p>
@@ -170,10 +169,10 @@ const Friends = () => {
               {requests.map((r) => (
                 <div
                   key={r.friendship_id}
-                  className="bg-gray-800 border border-gray-700 rounded-xl p-4 flex items-center justify-between"
+                  className="bg-gray-800 border border-gray-600 rounded-xl p-4 flex items-center justify-between shadow-md"
                 >
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full overflow-hidden border border-gray-600">
+                    <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-500">
                       {r.avatar_url ? (
                         <img
                           src={r.avatar_url}
@@ -181,29 +180,29 @@ const Friends = () => {
                           className="w-full h-full object-cover"
                         />
                       ) : (
-                        <div className="w-full h-full bg-gray-900 flex items-center justify-center text-white text-xs font-bold">
+                        <div className="w-full h-full bg-gray-900 flex items-center justify-center text-white text-sm font-bold">
                           {r.from_username[0].toUpperCase()}
                         </div>
                       )}
                     </div>
-                    <p className="text-sm text-white">
-                      <span className="font-semibold">
+                    <p className="text-sm text-gray-200">
+                      <span className="font-bold text-white">
                         {r.from_username}
                       </span>{" "}
-                      sent you a friend request
+                      wants to be friends
                     </p>
                   </div>
 
                   <div className="flex gap-2">
                     <button
                       onClick={() => acceptRequest(r.friendship_id)}
-                      className="px-3 py-1 rounded-lg text-xs bg-teal-600 hover:bg-teal-500 text-white"
+                      className="px-4 py-2 rounded-lg text-xs font-bold bg-teal-600 hover:bg-teal-500 text-white shadow-lg active:scale-95 transition"
                     >
                       Accept
                     </button>
                     <button
                       onClick={() => rejectRequest(r.friendship_id)}
-                      className="px-3 py-1 rounded-lg text-xs bg-gray-700 hover:bg-gray-600 text-gray-200"
+                      className="px-4 py-2 rounded-lg text-xs font-bold bg-gray-700 hover:bg-gray-600 text-gray-300 active:scale-95 transition"
                     >
                       Reject
                     </button>
@@ -214,22 +213,19 @@ const Friends = () => {
           )}
         </section>
 
-        {/* SUGGESTIONS (KEEPING YOUR FEATURE) */}
+        {/* SUGGESTIONS */}
         <section>
-          <h2 className="text-xl font-bold text-white mb-4">
-            Friend Suggestions
+          <h2 className="text-xl font-bold text-gray-400 mb-4 uppercase text-sm tracking-wider">
+            Suggested for you
           </h2>
           {suggestions.length === 0 ? (
             <p className="text-gray-500 text-sm">
-              No suggestions right now. You’re all connected 👀
+              No suggestions right now.
             </p>
           ) : (
             <div className="grid sm:grid-cols-2 gap-4">
               {suggestions.map((s) => (
-                <div
-                  key={s.id}
-                  className="bg-gray-800 border border-gray-700 rounded-xl p-4 flex items-center justify-between"
-                >
+                <div key={s.id} className={cardClass}>
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-600">
                       {s.avatar_url ? (
@@ -258,7 +254,7 @@ const Friends = () => {
 
                   <button
                     onClick={() => sendRequest(s.id)}
-                    className="text-sm bg-gray-700 hover:bg-teal-600 px-3 py-1 rounded-lg text-white"
+                    className="text-xs font-bold bg-gray-700 hover:bg-teal-600 px-3 py-2 rounded-lg text-white transition-colors"
                   >
                     Add Friend
                   </button>

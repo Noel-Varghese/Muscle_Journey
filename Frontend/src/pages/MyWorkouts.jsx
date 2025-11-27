@@ -29,25 +29,25 @@ const MyWorkouts = () => {
     <div className="min-h-screen bg-gray-950 text-white">
       <Navbar />
 
-      <div className="max-w-3xl mx-auto mt-8 p-4 space-y-4">
-        <h2 className="text-2xl font-bold mb-4">📓 My Workouts</h2>
+      <div className="max-w-3xl mx-auto mt-8 p-4 space-y-6">
+        <h2 className="text-2xl font-bold mb-4 text-teal-400">📓 My Workouts</h2>
 
         {workouts.map((w) => (
           <div
             key={w.id}
-            className="bg-gray-900 border border-gray-700 rounded-lg p-4 flex justify-between"
+            className="bg-gray-900 border border-gray-700 rounded-xl p-6 flex justify-between items-center hover:border-teal-500/40 transition-all duration-300 shadow-md group"
           >
             <div>
-              <h4 className="font-bold text-lg">{w.exercise}</h4>
+              <h4 className="font-bold text-xl text-white mb-1 group-hover:text-teal-300 transition-colors">{w.exercise}</h4>
               <p className="text-sm text-gray-400">
-                {w.sets} sets × {w.reps} reps
-                {w.weight && ` @ ${w.weight}kg`}
+                <span className="font-mono text-white">{w.sets}</span> sets × <span className="font-mono text-white">{w.reps}</span> reps
+                {w.weight && <span className="ml-2 text-teal-500 font-bold">@ {w.weight}kg</span>}
               </p>
             </div>
 
             <button
               onClick={() => deleteWorkout(w.id)}
-              className="text-red-500 hover:text-red-700"
+              className="text-red-400 hover:text-red-300 bg-red-900/20 px-4 py-2 rounded-lg hover:bg-red-900/40 transition-colors text-sm font-semibold"
             >
               Delete
             </button>

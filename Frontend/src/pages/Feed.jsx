@@ -25,7 +25,7 @@ const Feed = () => {
       <Navbar />
 
       {/* GRID */}
-      <div className="max-w-7xl mx-auto p-4 columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-4 space-y-4">
+      <div className="max-w-7xl mx-auto p-4 columns-1 sm:columns-2 md:columns-3 lg:columns-4 gap-6 space-y-6">
         {posts.map((post) => (
           <PostCardPinterest
             key={post.id}
@@ -35,12 +35,12 @@ const Feed = () => {
         ))}
       </div>
 
-      {/* MODAL */}
+      {/* MODAL with Glassmorphism */}
       {activePost && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
-          <div className="bg-gray-900 rounded-2xl max-w-3xl w-full mx-4 overflow-hidden">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 transition-opacity duration-300">
+          <div className="bg-gray-900 border border-gray-700 rounded-2xl max-w-3xl w-full mx-4 overflow-hidden shadow-2xl">
 
-            {/* ✅ IMAGE OR VIDEO PREVIEW (FIXED SAFELY, STRUCTURE SAME) */}
+            {/* IMAGE OR VIDEO */}
             {activePost?.image_url &&
             [".mp4", ".webm", ".ogg"].some((ext) =>
               activePost.image_url.toLowerCase().includes(ext)
@@ -60,18 +60,18 @@ const Feed = () => {
               )
             )}
 
-            <div className="p-4">
-              <p className="text-gray-300 mb-2">{activePost.content}</p>
+            <div className="p-6">
+              <p className="text-gray-200 text-lg mb-4">{activePost.content}</p>
 
-              <div className="flex items-center gap-3 text-sm text-gray-400">
-                <span>❤️ {activePost.likes_count}</span>
-                <span>💬 {activePost.comments_count}</span>
-                <span>👤 {activePost.username}</span>
+              <div className="flex items-center gap-4 text-sm text-gray-400 mb-6">
+                <span className="flex items-center gap-1">❤️ {activePost.likes_count}</span>
+                <span className="flex items-center gap-1">💬 {activePost.comments_count}</span>
+                <span className="text-teal-400 font-semibold">@{activePost.username}</span>
               </div>
 
               <button
                 onClick={() => setActivePost(null)}
-                className="mt-4 bg-teal-600 px-6 py-2 rounded-lg"
+                className="w-full bg-gray-800 hover:bg-gray-700 text-white py-3 rounded-xl font-bold transition-all active:scale-95"
               >
                 Close
               </button>

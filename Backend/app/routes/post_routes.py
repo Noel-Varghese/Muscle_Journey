@@ -218,3 +218,120 @@ def unlike_post(
     session.delete(exists)
     session.commit()
     return {"message": "Like removed"}
+
+@router.post("/{post_id}/comment")
+def add_comment(
+    post_id: int,
+    comment_data: CommentCreate,
+    session: Session = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
+    comment = Comment(
+        content=comment_data.content,
+        user_id=user.id,
+        post_id=post_id
+    )
+    session.add(comment)
+    session.commit()
+    session.refresh(comment)
+    return comment
+
+
+@router.get("/{post_id}/comments")
+def get_comments(
+    post_id: int,
+    session: Session = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
+    comments = session.exec(
+        select(Comment)
+        .where(Comment.post_id == post_id)
+        .order_by(Comment.created_at)
+    ).all()
+
+    result = []
+    for c in comments:
+        likes = session.exec(
+            select(CommentLike).where(CommentLike.comment_id == c.id)
+        ).all()
+
+        liked = session.exec(
+            select(CommentLike).where(
+                CommentLike.comment_id == c.id,
+                CommentLike.user_id == user.id
+            )
+        ).first()
+
+        result.append({
+            "id": c.id,
+            "content": c.content,
+            "user_id": c.user_id,
+            "created_at": c.created_at,
+            "likes_count": len(likes),
+            "liked_by_me": liked is not None
+        })
+
+    return result
+
+
+@router.delete("/comment/{comment_id}")
+def delete_comment(
+    comment_id: int,
+    session: Session = Depends(get_session),
+    user: User = Depends(get_current_user)
+):
+    comment = session.get(Comment, comment_id)
+
+    if not comment:
+        raise HTTPException(status_code=404, detail="Comment not found")
+
+    if comment.user_id != user.id:
+        raise HTTPException(status_code=403, detail="Not allowed")
+
+    session.delete(comment)
+    session.commit()
+    return {"message": "Comment deleted"}
+
+
+# ====== COMMENT LIKE ======
+@router.post("/comments/{comment_id}/like")
+def like_comment(
+    comment_id: int,
+    session: Session = Depends(get_session),
+    user: User = Depends(get_current_user)
+):
+    exists = session.exec(
+        select(CommentLike).where(
+            CommentLike.comment_id == comment_id,
+            CommentLike.user_id == user.id
+        )
+    ).first()
+
+    if exists:
+        raise HTTPException(status_code=400, detail="Already liked")
+
+    like = CommentLike(comment_id=comment_id, user_id=user.id)
+    session.add(like)
+    session.commit()
+    return {"message": "Comment liked"}
+
+
+@router.delete("/comments/{comment_id}/like")
+def unlike_comment(
+    comment_id: int,
+    session: Session = Depends(get_session),
+    user: User = Depends(get_current_user)
+):
+    exists = session.exec(
+        select(CommentLike).where(
+            CommentLike.comment_id == comment_id,
+            CommentLike.user_id == user.id
+        )
+    ).first()
+
+    if not exists:
+        raise HTTPException(status_code=404, detail="Like not found")
+
+    session.delete(exists)
+    session.commit()
+    return {"message": "Like removed"}

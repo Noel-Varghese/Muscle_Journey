@@ -1,4 +1,3 @@
-// frontend/src/pages/Dashboard.jsx
 import axios from "axios";
 import { useEffect, useState, useCallback, useContext } from "react";
 import Navbar from "../components/Navbar";
@@ -53,11 +52,13 @@ const Dashboard = () => {
           
           {/* Feed */}
           <div className="lg:col-span-2">
+            
+            {/* Create Post Bar */}
             <div
               onClick={() => setOpenModal(true)}
-              className="bg-gray-800 rounded-3xl p-4 mb-8 border border-gray-700 flex gap-4 items-center cursor-pointer"
+              className="bg-gray-800/50 backdrop-blur-sm rounded-3xl p-4 mb-8 border border-gray-700 hover:border-teal-500/50 transition-all cursor-pointer shadow-lg flex gap-4 items-center group"
             >
-              <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold">
+              <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center text-white font-bold border border-gray-600 group-hover:border-teal-400 transition-colors">
                 {user?.username?.[0]?.toUpperCase() || "U"}
               </div>
 
@@ -65,20 +66,22 @@ const Dashboard = () => {
                 type="text"
                 placeholder="Share your progress..."
                 readOnly
-                className="w-full bg-gray-900/20 rounded-xl px-4 py-3"
+                className="w-full bg-gray-900/50 rounded-xl px-5 py-3 text-gray-300 focus:outline-none group-hover:bg-gray-900 transition-colors cursor-pointer"
               />
 
-              <button className="bg-teal-600 px-4 py-2 rounded-xl">
+              <button className="bg-teal-600 group-hover:bg-teal-500 text-white px-6 py-2 rounded-xl font-bold transition-colors">
                 Post
               </button>
             </div>
 
-            <h3 className="text-xl font-bold mb-4">Latest Activity</h3>
+            <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+              <span className="text-teal-500">●</span> Latest Activity
+            </h3>
 
             {loading ? (
-              <p className="text-gray-500">Loading...</p>
+              <p className="text-gray-500 text-center py-10">Loading feed...</p>
             ) : (
-              <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-8">
                 {posts.map((post) => (
                   <PostCard key={post.id} post={post} />
                 ))}
@@ -92,14 +95,15 @@ const Dashboard = () => {
 
         </div>
       </main>
+
+      {/* Floating Action Button */}
       <button
         onClick={() => setOpenModal(true)}
-        className="fixed bottom-10 right-10 bg-teal-600 hover:bg-teal-700 
-                  text-white w-16 h-16 rounded-full shadow-xl 
-                  text-4xl flex items-center justify-center z-50"
+        className="fixed bottom-10 right-10 bg-gradient-to-r from-teal-500 to-teal-700 text-white w-16 h-16 rounded-full shadow-2xl shadow-teal-900/50 text-4xl flex items-center justify-center z-50 hover:scale-110 active:scale-95 transition-all duration-300 border-2 border-teal-400/30"
       >
         +
       </button>
+      
       <CreatePostModal
         open={openModal}
         onClose={() => setOpenModal(false)}
