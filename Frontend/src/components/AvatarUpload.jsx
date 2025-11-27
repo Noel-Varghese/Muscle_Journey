@@ -24,7 +24,6 @@ const AvatarUpload = () => {
         }
       );
 
-      // Backend returns: { avatar_url: "..." }
       const newAvatar = res.data.avatar_url;
 
       if (!newAvatar) {
@@ -32,7 +31,6 @@ const AvatarUpload = () => {
         return;
       }
 
-      // Update global user immediately
       const updatedUser = { ...user, avatar_url: newAvatar };
       setUser(updatedUser);
 
@@ -45,13 +43,20 @@ const AvatarUpload = () => {
   };
 
   return (
-    <div className="flex flex-col gap-2">
-      <label className="font-semibold text-gray-300">Change Profile Photo</label>
+    <div className="flex flex-col gap-3">
+      <label className="text-sm font-bold text-gray-400 uppercase tracking-wide">Change Profile Photo</label>
       <input
         type="file"
         accept="image/*"
         onChange={changeAvatar}
-        className="text-gray-200"
+        className="block w-full text-sm text-gray-400
+          file:mr-4 file:py-2.5 file:px-6
+          file:rounded-full file:border-0
+          file:text-sm file:font-bold
+          file:bg-teal-600 file:text-white
+          hover:file:bg-teal-500
+          file:transition-colors file:cursor-pointer
+          cursor-pointer bg-gray-900/50 rounded-full border border-gray-700"
       />
     </div>
   );

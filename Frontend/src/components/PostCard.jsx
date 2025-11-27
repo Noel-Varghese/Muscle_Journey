@@ -1,4 +1,3 @@
-// frontend/src/components/PostCard.jsx
 import { useState, useContext, useEffect } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
@@ -17,14 +16,12 @@ const PostCard = ({ post }) => {
 
   const username = post.user || post.username || "User";
 
-  // 👉 detect if media is video based on extension
   const isVideo =
     post.image_url &&
     [".mp4", ".webm", ".ogg"].some((ext) =>
       post.image_url.toLowerCase().includes(ext)
     );
 
-  // ---- CHECK IF I LIKED ----
   useEffect(() => {
     const load = async () => {
       try {
@@ -40,7 +37,6 @@ const PostCard = ({ post }) => {
     load();
   }, [post.id, token]);
 
-  // ---- LIKE / UNLIKE ----
   const toggleLike = async () => {
     try {
       if (!likedPost) {
@@ -64,7 +60,6 @@ const PostCard = ({ post }) => {
     }
   };
 
-  // ---- LOAD COMMENTS ----
   const loadComments = async () => {
     try {
       const res = await axios.get(
@@ -77,7 +72,6 @@ const PostCard = ({ post }) => {
     }
   };
 
-  // ---- ADD COMMENT ----
   const submitComment = async () => {
     if (!commentInput.trim()) return;
 
@@ -94,7 +88,6 @@ const PostCard = ({ post }) => {
     }
   };
 
-  // ---- LIKE / UNLIKE COMMENT ----
   const toggleCommentLike = async (c) => {
     try {
       if (!c.liked_by_me) {
@@ -128,7 +121,6 @@ const PostCard = ({ post }) => {
     }
   };
 
-  // ---- DELETE COMMENT ----
   const deleteComment = async (id) => {
     try {
       await axios.delete(
@@ -142,52 +134,52 @@ const PostCard = ({ post }) => {
   };
 
   return (
-    <div className="bg-gray-800 border border-gray-700 rounded-xl p-5">
+    <div className="bg-gray-800 border border-gray-700 rounded-3xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300">
       {/* HEADER */}
       <div
-        className="flex items-center gap-3 mb-4 cursor-pointer"
+        className="flex items-center gap-3 mb-5 cursor-pointer group"
         onClick={() => nav(`/friend/${post.user_id}`)}
       >
-        <div className="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-white font-bold">
+        <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center text-white font-bold border border-gray-600 group-hover:border-teal-500 transition-colors">
           {username[0].toUpperCase()}
         </div>
 
         <div>
-          <h4 className="font-bold text-white">{username}</h4>
+          <h4 className="font-bold text-white group-hover:text-teal-400 transition-colors">{username}</h4>
           <p className="text-xs text-gray-400">
             {new Date(post.created_at).toLocaleString()}
           </p>
         </div>
       </div>
 
-      {/* MEDIA (IMAGE OR VIDEO) */}
+      {/* MEDIA */}
       {post.image_url && (
-        <div className="w-full rounded-xl mb-4 overflow-hidden shadow-lg bg-black">
+        <div className="w-full rounded-2xl mb-5 overflow-hidden shadow-md bg-black border border-gray-700/50">
           {isVideo ? (
             <video
               src={post.image_url}
               controls
-              className="w-full max-h-96 object-contain"
+              className="w-full max-h-[500px] object-contain"
             />
           ) : (
             <img
               src={post.image_url}
-              className="w-full max-h-96 object-cover"
+              className="w-full max-h-[500px] object-cover"
               alt="post media"
             />
           )}
         </div>
       )}
 
-      {/* TEXT CONTENT */}
-      <p className="text-gray-300 mb-4">{post.content}</p>
+      {/* CONTENT */}
+      <p className="text-gray-200 mb-5 leading-relaxed">{post.content}</p>
 
       {/* ACTION BAR */}
-      <div className="flex items-center gap-6 border-t border-gray-700 pt-3">
+      <div className="flex items-center gap-6 border-t border-gray-700/50 pt-4">
         <button
           onClick={toggleLike}
-          className={`flex items-center gap-2 text-sm ${
-            likedPost ? "text-pink-500" : "text-gray-400"
+          className={`flex items-center gap-2 text-sm font-medium transition-all active:scale-95 px-2 py-1 rounded-lg ${
+            likedPost ? "text-pink-500 bg-pink-500/10" : "text-gray-400 hover:text-white hover:bg-gray-700"
           }`}
         >
           {likedPost ? "❤️" : "🤍"} {likesCount}
@@ -198,7 +190,7 @@ const PostCard = ({ post }) => {
             setShowComments((v) => !v);
             if (!showComments) loadComments();
           }}
-          className="text-sm text-gray-400"
+          className="text-sm text-gray-400 hover:text-teal-400 transition-colors flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-700"
         >
           💬 Comments ({comments.length || post.comments_count})
         </button>
@@ -206,23 +198,23 @@ const PostCard = ({ post }) => {
 
       {/* COMMENTS */}
       {showComments && (
-        <div className="mt-4 bg-gray-900 border border-gray-700 p-4 rounded-xl">
-          <div className="max-h-64 overflow-y-auto space-y-3">
+        <div className="mt-5 bg-gray-900/50 border border-gray-700/50 p-4 rounded-2xl animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="max-h-64 overflow-y-auto space-y-3 mb-4 pr-2">
             {comments.map((c) => (
               <div
                 key={c.id}
-                className="bg-gray-800 border border-gray-700 p-3 rounded-lg flex justify-between"
+                className="bg-gray-800/80 border border-gray-700 p-3 rounded-xl flex justify-between"
               >
                 <div>
-                  <p className="text-sm text-white font-semibold">
+                  <p className="text-xs text-teal-400 font-bold mb-1">
                     {c.user_id === user.id ? "You" : "User"}
                   </p>
-                  <p className="text-gray-300">{c.content}</p>
+                  <p className="text-gray-300 text-sm">{c.content}</p>
 
                   <button
                     onClick={() => toggleCommentLike(c)}
-                    className={`text-xs mt-1 ${
-                      c.liked_by_me ? "text-pink-400" : "text-gray-500"
+                    className={`text-xs mt-2 flex items-center gap-1 ${
+                      c.liked_by_me ? "text-pink-400" : "text-gray-500 hover:text-gray-300"
                     }`}
                   >
                     {c.liked_by_me ? "❤️" : "🤍"} {c.likes_count}
@@ -232,7 +224,7 @@ const PostCard = ({ post }) => {
                 {c.user_id === user.id && (
                   <button
                     onClick={() => deleteComment(c.id)}
-                    className="text-red-500 text-xs hover:text-red-700"
+                    className="text-red-500 text-xs hover:text-red-400 font-medium h-fit"
                   >
                     Delete
                   </button>
@@ -241,16 +233,16 @@ const PostCard = ({ post }) => {
             ))}
           </div>
 
-          <div className="flex gap-2 mt-3">
+          <div className="flex gap-2">
             <input
-              className="flex-1 bg-gray-800 border border-gray-700 text-white p-2 rounded-lg"
-              placeholder="Write a comment…"
+              className="flex-1 bg-gray-800 border border-gray-600 text-white p-2.5 rounded-xl text-sm focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all placeholder-gray-500"
+              placeholder="Write a comment..."
               value={commentInput}
               onChange={(e) => setCommentInput(e.target.value)}
             />
             <button
               onClick={submitComment}
-              className="bg-teal-600 px-4 rounded-lg text-white"
+              className="bg-teal-600 hover:bg-teal-500 text-white px-5 rounded-xl text-sm font-bold shadow-lg active:scale-95 transition-all"
             >
               Post
             </button>

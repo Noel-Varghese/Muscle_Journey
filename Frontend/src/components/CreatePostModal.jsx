@@ -1,4 +1,3 @@
-// frontend/src/components/CreatePostModal.jsx
 import { useState, useContext } from "react";
 import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
@@ -9,7 +8,7 @@ const CreatePostModal = ({ open, onClose, refreshFeed }) => {
   const [content, setContent] = useState("");
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [previewType, setPreviewType] = useState(null); // "image" | "video" | null
+  const [previewType, setPreviewType] = useState(null);
   const [loading, setLoading] = useState(false);
 
   if (!open) return null;
@@ -25,13 +24,11 @@ const CreatePostModal = ({ open, onClose, refreshFeed }) => {
 
     setFile(f);
 
-    // Decide if it's image or video
     if (f.type.startsWith("video/")) {
       setPreviewType("video");
     } else if (f.type.startsWith("image/")) {
       setPreviewType("image");
     } else {
-      // unsupported -> no preview, but still uploadable if you want
       setPreviewType(null);
     }
 
@@ -80,15 +77,19 @@ const CreatePostModal = ({ open, onClose, refreshFeed }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-gray-900 w-full max-w-lg rounded-2xl border border-gray-700 p-6 shadow-2xl">
-        <h2 className="text-xl font-bold text-white mb-4">
-          Share your workout
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 transition-all duration-300">
+      <div className="bg-gray-900 w-full max-w-lg rounded-3xl border border-gray-700 p-8 shadow-2xl relative overflow-hidden">
+        
+        {/* Decorative Top Gradient */}
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-500 to-blue-500"></div>
+
+        <h2 className="text-2xl font-black text-white mb-6">
+          Share your workout 🚀
         </h2>
 
         {/* Text area */}
         <textarea
-          className="w-full bg-gray-800 text-white rounded-xl p-3 border border-gray-700 outline-none resize-none mb-4"
+          className="w-full bg-gray-800/50 text-white rounded-xl p-4 border border-gray-700 outline-none resize-none mb-4 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all placeholder-gray-500"
           rows={4}
           placeholder="How was your session today?"
           value={content}
@@ -96,27 +97,26 @@ const CreatePostModal = ({ open, onClose, refreshFeed }) => {
         />
 
         {/* File input */}
-        <div className="mb-4">
-          <label className="block text-sm text-gray-400 mb-1">
+        <div className="mb-6">
+          <label className="block text-xs font-bold text-gray-400 mb-2 uppercase tracking-wide">
             Add image / video
           </label>
           <input
             type="file"
-            // 🔥 allow images + videos
             accept="image/*,video/*"
             onChange={handleFileChange}
-            className="text-sm text-gray-300"
+            className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-teal-900 file:text-teal-300 hover:file:bg-teal-800 transition-colors cursor-pointer"
           />
         </div>
 
         {/* Preview */}
         {previewUrl && (
-          <div className="mb-4 rounded-xl overflow-hidden border border-gray-700">
+          <div className="mb-6 rounded-xl overflow-hidden border border-gray-700 bg-black/50 shadow-inner">
             {previewType === "video" ? (
               <video
                 src={previewUrl}
                 controls
-                className="w-full max-h-80 object-contain bg-black"
+                className="w-full max-h-80 object-contain mx-auto"
               />
             ) : (
               <img
@@ -129,10 +129,10 @@ const CreatePostModal = ({ open, onClose, refreshFeed }) => {
         )}
 
         {/* Actions */}
-        <div className="flex justify-end gap-3 mt-2">
+        <div className="flex justify-end gap-3 mt-4">
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700"
+            className="px-5 py-2.5 rounded-xl bg-gray-800 text-gray-300 hover:bg-gray-700 font-semibold transition-colors active:scale-95"
             disabled={loading}
           >
             Cancel
@@ -140,7 +140,7 @@ const CreatePostModal = ({ open, onClose, refreshFeed }) => {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="px-4 py-2 rounded-lg bg-teal-600 text-white font-semibold hover:bg-teal-500 disabled:opacity-60"
+            className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-teal-600 to-teal-500 text-white font-bold hover:shadow-lg hover:shadow-teal-500/25 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? "Posting..." : "Post"}
           </button>

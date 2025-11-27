@@ -10,7 +10,6 @@ const RegisterForm = () => {
   const { register } = useContext(AuthContext);
   const nav = useNavigate();
 
-  // Theme State (Default to Dark)
   const [darkMode, setDarkMode] = useState(true);
 
   const [form, setForm] = useState({
@@ -36,9 +35,10 @@ const RegisterForm = () => {
   }
   };
 
+  const inputClass = "p-3 rounded-full bg-white/80 backdrop-blur-sm text-black placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:bg-white transition-all shadow-inner";
+
   return (
     <div
-      // justify-end moves form to the right side
       className="h-screen w-screen bg-cover bg-center flex items-center justify-end pr-24 transition-all duration-500"
       style={{
         backgroundImage: `url(${darkMode ? bgRegisterDark : bgRegisterLight})`,
@@ -47,58 +47,55 @@ const RegisterForm = () => {
       {/* Theme Toggle Button */}
       <button
         onClick={() => setDarkMode(!darkMode)}
-        className="absolute top-6 right-6 bg-white/40 backdrop-blur-md rounded-full p-3 text-xl shadow hover:bg-white/60 transition z-10"
+        className="absolute top-6 right-6 bg-white/30 backdrop-blur-md rounded-full p-3 text-xl shadow-lg hover:bg-white/50 transition hover:scale-110 active:scale-95 z-10 border border-white/20"
       >
         {darkMode ? "☀️" : "🌙"}
       </button>
 
       {/* Glass Register Box */}
-      <div className="w-[500px] bg-white/30 backdrop-blur-xl border border-white/40 rounded-2xl shadow-xl p-8 flex flex-col gap-6">
-        <h2 className="text-3xl font-extrabold text-center text-white tracking-wide drop-shadow">
+      <div className="w-[500px] bg-black/40 backdrop-blur-xl border border-white/20 rounded-3xl shadow-2xl p-8 flex flex-col gap-6 animate-in fade-in slide-in-from-right-10 duration-500">
+        <h2 className="text-3xl font-black text-center text-white tracking-wide drop-shadow-lg">
           CREATE ACCOUNT
         </h2>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Username */}
           <input
             name="username"
             type="text"
             placeholder="Username"
-            className="p-3 rounded-full bg-white/90 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-400"
+            className={inputClass}
             onChange={handleChange}
             required
           />
 
-          {/* Email */}
           <input
             name="email"
             type="email"
             placeholder="Email"
-            className="p-3 rounded-full bg-white/90 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-400"
+            className={inputClass}
             onChange={handleChange}
             required
           />
 
-          {/* Password */}
           <input
             name="password"
             type="password"
             placeholder="Password"
-            className="p-3 rounded-full bg-white/90 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-400"
+            className={inputClass}
             onChange={handleChange}
             required
           />
 
-          {/* Grid Layout for shorter inputs */}
+          {/* Grid Layout */}
           <div className="grid grid-cols-2 gap-4">
             <select
               name="gender"
-              className="p-3 rounded-full bg-white/90 text-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-400 cursor-pointer"
+              className={`${inputClass} appearance-none cursor-pointer`}
               onChange={handleChange}
               required
               defaultValue=""
             >
-              <option value="" disabled>Select Gender</option>
+              <option value="" disabled>Gender</option>
               <option value="male">Male</option>
               <option value="female">Female</option>
               <option value="other">Other</option>
@@ -108,7 +105,7 @@ const RegisterForm = () => {
               name="age"
               type="number"
               placeholder="Age"
-              className="p-3 rounded-full bg-white/90 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-400"
+              className={inputClass}
               onChange={handleChange}
               required
             />
@@ -117,7 +114,7 @@ const RegisterForm = () => {
               name="height"
               type="number"
               placeholder="Height (cm)"
-              className="p-3 rounded-full bg-white/90 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-400"
+              className={inputClass}
               onChange={handleChange}
               required
             />
@@ -126,7 +123,7 @@ const RegisterForm = () => {
               name="weight"
               type="number"
               placeholder="Weight (kg)"
-              className="p-3 rounded-full bg-white/90 text-black placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-400"
+              className={inputClass}
               onChange={handleChange}
               required
             />
@@ -134,15 +131,15 @@ const RegisterForm = () => {
 
           <button
             type="submit"
-            className="bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-full font-bold transition-all shadow-md active:scale-95 mt-2"
+            className="bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-500 hover:to-teal-400 text-white py-3.5 rounded-full font-bold transition-all shadow-lg shadow-teal-900/50 active:scale-95 mt-2 tracking-wide"
           >
             SIGN UP
           </button>
         </form>
 
-        <div className="text-center text-sm text-white/90">
-          <Link to="/" className="hover:underline block">
-            Already have an account? Login
+        <div className="text-center text-sm text-white/90 font-medium">
+          <Link to="/" className="hover:text-teal-300 transition-colors">
+            Already have an account? <span className="underline decoration-teal-400">Login</span>
           </Link>
         </div>
       </div>
