@@ -142,7 +142,7 @@ def get_user_posts(
             "username": u.username,
             "avatar_url": u.avatar_url,
             "image_url": post.image_url,
-            "media_type": post.media_type,  # ✅ required
+            "media_type": post.media_type,  
             "created_at": post.created_at,
             "likes_count": len(likes),
             "comments_count": len(comments),
