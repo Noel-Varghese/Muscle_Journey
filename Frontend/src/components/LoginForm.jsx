@@ -1,8 +1,10 @@
 import { useContext, useState } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
-import bgLight from "../assets/bg-light.png";
-import bgDark from "../assets/bg-dark.png";
+
+// Make sure these files exist in your assets folder!
+import videoLight from "../assets/video-light.mp4"; 
+import videoDark from "../assets/video-dark.mp4";
 
 const LoginForm = () => {
   const { login } = useContext(AuthContext);
@@ -13,23 +15,30 @@ const LoginForm = () => {
   const nav = useNavigate();
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  try {
-    await login(email, password);
-    nav("/dashboard");
-  } catch (err) {
-    alert("Invalid login");
-  }
+    e.preventDefault();
+    try {
+      await login(email, password);
+      nav("/dashboard");
+    } catch (err) {
+      alert("Invalid login");
+    }
   };
 
   return (
     <div
-      // CHANGED: justify-center -> justify-end, added pr-24 for spacing
-      className="h-screen w-screen bg-cover bg-center flex items-center justify-end pr-24 transition-all duration-500"
-      style={{
-        backgroundImage: `url(${darkMode ? bgDark : bgLight})`,
-      }}
+      className="relative h-screen w-screen flex items-center justify-end pr-24 transition-all duration-500 overflow-hidden"
     >
+      {/* Background Video Element */}
+      <video
+        key={darkMode ? "dark" : "light"} 
+        src={darkMode ? videoDark : videoLight}
+        autoPlay
+        // CHANGED: Removed the 'loop' attribute here
+        muted
+        playsInline
+        className="absolute top-0 left-0 w-full h-full object-cover z-[-1]"
+      />
+
       {/* Theme Button */}
       <button
         onClick={() => setDarkMode(!darkMode)}
@@ -70,7 +79,9 @@ const LoginForm = () => {
         </form>
 
         <div className="text-center text-sm text-white/90">
-          <button className="hover:underline block mx-auto mb-2">Forgot Password?</button>
+          <button className="hover:underline block mx-auto mb-2">
+            Forgot Password?
+          </button>
           <Link to="/register" className="hover:underline block">
             Sign Up
           </Link>
