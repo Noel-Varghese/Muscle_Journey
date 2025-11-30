@@ -23,7 +23,7 @@ def add_workout(
     workout.user_id = user.id
 
     # ✅ FORCE TODAY'S DATE (NO UTC SHIFT)
-    workout.workout_date = date.today()
+ 
 
     session.add(workout)
     session.commit()
@@ -40,7 +40,7 @@ def get_my_workouts(
     workouts = session.exec(
         select(Workout)
         .where(Workout.user_id == user.id)
-        .order_by(Workout.workout_date.desc())
+        .order_by(Workout.created_at.desc())
     ).all()
 
     return workouts
@@ -79,7 +79,7 @@ def workout_calendar(
     date_map = {}
 
     for w in workouts:
-        day = w.workout_date.strftime("%Y-%m-%d")  # ✅ FIXED
+        day = w.created_at.strftime("%Y-%m-%d")  # ✅ FIXED
         date_map[day] = date_map.get(day, 0) + 1
 
     return date_map

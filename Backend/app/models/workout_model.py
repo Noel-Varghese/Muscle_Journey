@@ -1,9 +1,6 @@
-# backend/app/models/workout_model.py
-
 from sqlmodel import SQLModel, Field
 from typing import Optional
-from datetime import date
-
+from datetime import datetime
 
 class Workout(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -14,5 +11,5 @@ class Workout(SQLModel, table=True):
     reps: int
     weight: Optional[float] = None
 
-    # ✅ FIX: DATE ONLY (NO TIMEZONE BUG EVER AGAIN)
-    workout_date: date = Field(default_factory=date.today)
+    # use local time instead of UTC so the date matches your actual day
+    created_at: datetime = Field(default_factory=datetime.now)

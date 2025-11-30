@@ -12,7 +12,15 @@ const LogWorkout = () => {
   const [weight, setWeight] = useState("");
 
   const saveWorkout = async () => {
-    if (!exercise || !sets || !reps) return alert("Fill all required fields");
+    if (!exercise || !sets || !reps) {
+      alert("Fill all required fields");
+      return;
+    }
+
+    if (!token) {
+      alert("Auth token missing. Please logout and login again.");
+      return;
+    }
 
     try {
       await axios.post(
@@ -23,7 +31,11 @@ const LogWorkout = () => {
           reps: Number(reps),
           weight: weight ? Number(weight) : null,
         },
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: {
+            Authorization: `Bearer ${token}`, // ✅ FIXED
+          },
+        }
       );
 
       alert("Workout saved ✅");
@@ -32,19 +44,22 @@ const LogWorkout = () => {
       setReps("");
       setWeight("");
     } catch (err) {
-      console.log(err);
+      console.log("SAVE WORKOUT ERROR:", err.response?.data || err.message);
       alert("Failed to save workout ❌");
     }
   };
 
-  const inputClass = "w-full p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all duration-300 placeholder-gray-500 text-white";
+  const inputClass =
+    "w-full p-3 bg-gray-800/50 border border-gray-700 rounded-xl focus:outline-none focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all duration-300 placeholder-gray-500 text-white";
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <Navbar />
 
       <div className="max-w-xl mx-auto mt-10 bg-gray-900 p-8 rounded-2xl border border-gray-800 shadow-2xl">
-        <h2 className="text-2xl font-bold mb-6 text-teal-400 drop-shadow-sm">🏋️ Log Workout</h2>
+        <h2 className="text-2xl font-bold mb-6 text-teal-400 drop-shadow-sm">
+          🏋️ Log Workout
+        </h2>
 
         <div className="space-y-4">
           <input

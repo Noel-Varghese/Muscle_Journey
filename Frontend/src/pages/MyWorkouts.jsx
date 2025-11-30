@@ -1,189 +1,207 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState, useContext, useMemo } from "react";
 import axios from "axios";
 import Navbar from "../components/Navbar";
 import { AuthContext } from "../context/AuthContext";
+
+const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+const toDateKey = (dateLike) => {
+  const d = new Date(dateLike);
+  if (isNaN(d.getTime())) return null;
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
 
 const MyWorkouts = () => {
   const { token } = useContext(AuthContext);
 
   const [workouts, setWorkouts] = useState([]);
-  const [calendar, setCalendar] = useState({});
-  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [calendarMap, setCalendarMap] = useState({});
+  const today = new Date();
 
-  // ---------------- LOAD DATA ----------------
-  const loadWorkouts = async () => {
-    const res = await axios.get("http://localhost:8000/workouts/me", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setWorkouts(res.data);
-  };
+  const [currentYear, setCurrentYear] = useState(today.getFullYear());
+  const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+  const [selectedDate, setSelectedDate] = useState(toDateKey(today));
+  const [loading, setLoading] = useState(true);
 
-  const loadCalendar = async () => {
-    const res = await axios.get("http://localhost:8000/workouts/calendar", {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setCalendar(res.data);
+  // ✅ CRITICAL FIX: force axios auth sync
+  useEffect(() => {
+    if (token) {
+      axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+    }
+  }, [token]);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [resWorkouts, resCalendar] = await Promise.all([
+        axios.get("http://localhost:8000/workouts/me"),
+        axios.get("http://localhost:8000/workouts/calendar"),
+      ]);
+
+      setWorkouts(resWorkouts.data);
+      setCalendarMap(resCalendar.data || {});
+    } catch (err) {
+      console.log("Workout load error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    loadWorkouts();
-    loadCalendar();
+    loadData();
   }, []);
 
-  // ---------------- DELETE ----------------
-  const deleteWorkout = async (id) => {
-    await axios.delete(`http://localhost:8000/workouts/${id}`, {
-      headers: { Authorization: `Bearer ${token}` },
+  const monthLabel = useMemo(() => {
+    const d = new Date(currentYear, currentMonth, 1);
+    return d.toLocaleDateString("en-US", {
+      month: "long",
+      year: "numeric",
     });
-    loadWorkouts();
-    loadCalendar();
+  }, [currentYear, currentMonth]);
+
+  const daysInMonth = useMemo(
+    () => new Date(currentYear, currentMonth + 1, 0).getDate(),
+    [currentYear, currentMonth]
+  );
+
+  const firstWeekday = useMemo(
+    () => new Date(currentYear, currentMonth, 1).getDay(),
+    [currentYear, currentMonth]
+  );
+
+  const handlePrevMonth = () => {
+    setCurrentMonth((prev) => {
+      if (prev === 0) {
+        setCurrentYear((y) => y - 1);
+        return 11;
+      }
+      return prev - 1;
+    });
   };
 
-  // ---------------- MONTH HANDLING ----------------
-  const year = currentMonth.getFullYear();
-  const month = currentMonth.getMonth();
-
-  const firstDay = new Date(year, month, 1);
-  const lastDay = new Date(year, month + 1, 0);
-
-  const daysInMonth = lastDay.getDate();
-  const startDay = firstDay.getDay(); // 0 = Sunday
-
-  const monthName = currentMonth.toLocaleString("default", {
-    month: "long",
-    year: "numeric",
-  });
-
-  const prevMonth = () => {
-    setCurrentMonth(new Date(year, month - 1, 1));
+  const handleNextMonth = () => {
+    setCurrentMonth((prev) => {
+      if (prev === 11) {
+        setCurrentYear((y) => y + 1);
+        return 0;
+      }
+      return prev + 1;
+    });
   };
 
-  const nextMonth = () => {
-    setCurrentMonth(new Date(year, month + 1, 1));
+  const handleDayClick = (dayNum) => {
+    const key = toDateKey(new Date(currentYear, currentMonth, dayNum));
+    setSelectedDate(key);
   };
 
-  // ---------------- CALENDAR BUILD ----------------
-  const calendarCells = [];
+  const dayWorkoutCount = useMemo(() => {
+    if (!selectedDate) return 0;
+    return calendarMap[selectedDate] || 0;
+  }, [calendarMap, selectedDate]);
 
-  for (let i = 0; i < startDay; i++) {
-    calendarCells.push(null);
+  const selectedDayWorkouts = useMemo(() => {
+    if (!selectedDate) return [];
+    return workouts.filter(
+      (w) => toDateKey(w.created_at) === selectedDate
+    );
+  }, [workouts, selectedDate]);
+
+  const streak = useMemo(() => {
+    let count = 0;
+    let cursor = new Date();
+
+    while (true) {
+      const key = toDateKey(cursor);
+      if (!calendarMap[key]) break;
+      count += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return count;
+  }, [calendarMap]);
+
+  const intensityEmojiForDay = (dayNum) => {
+    const key = toDateKey(new Date(currentYear, currentMonth, dayNum));
+    const count = key ? calendarMap[key] || 0 : 0;
+    if (count >= 3) return "🔥";
+    if (count >= 1) return "🔵";
+    return "";
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-950 text-gray-100">
+        <Navbar />
+        <div className="flex items-center justify-center mt-20">
+          Loading workouts...
+        </div>
+      </div>
+    );
   }
 
-  for (let d = 1; d <= daysInMonth; d++) {
-    const fullDate = new Date(year, month, d)
-      .toISOString()
-      .split("T")[0];
-
-    const count = calendar[fullDate] || 0;
-
-    let emoji = "⚫";
-    if (count === 1) emoji = "🔵";
-    if (count >= 2) emoji = "🔥";
-
-    calendarCells.push({ day: d, emoji });
-  }
-
-  // ---------------- UI ----------------
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-gray-950 text-gray-100">
       <Navbar />
 
-      <div className="max-w-6xl mx-auto mt-8 p-4 grid grid-cols-1 md:grid-cols-3 gap-6">
-
-        {/* ✅ NEW CALENDAR UI */}
-        <div className="bg-gray-900 border border-gray-700 rounded-3xl p-6">
-
-          {/* HEADER */}
-          <div className="flex items-center justify-between mb-6">
-            <button
-              onClick={prevMonth}
-              className="text-2xl px-3 py-1 rounded-lg bg-gray-800 hover:bg-gray-700"
-            >
-              ←
-            </button>
-
-            <h3 className="font-bold text-xl tracking-wide">
-              {monthName}
-            </h3>
-
-            <button
-              onClick={nextMonth}
-              className="text-2xl px-3 py-1 rounded-lg bg-gray-800 hover:bg-gray-700"
-            >
-              →
-            </button>
+      <main className="max-w-6xl mx-auto px-4 py-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* LEFT: CALENDAR */}
+        <section className="bg-gray-900 rounded-3xl border border-gray-800 p-6 flex flex-col gap-4">
+          <div className="flex items-center justify-between mb-2">
+            <button onClick={handlePrevMonth} className="w-9 h-9 rounded-full bg-gray-800">‹</button>
+            <p className="text-lg font-bold">{monthLabel}</p>
+            <button onClick={handleNextMonth} className="w-9 h-9 rounded-full bg-gray-800">›</button>
           </div>
 
-          {/* WEEK HEADER */}
-          <div className="grid grid-cols-7 text-center text-gray-400 text-sm mb-3">
-            <span>Su</span>
-            <span>Mo</span>
-            <span>Tu</span>
-            <span>We</span>
-            <span>Th</span>
-            <span>Fr</span>
-            <span>Sa</span>
+          <div className="grid grid-cols-7 text-xs text-gray-500">
+            {WEEKDAYS.map((d) => (
+              <div key={d} className="text-center py-1">{d}</div>
+            ))}
           </div>
 
-          {/* DAYS GRID */}
-          <div className="grid grid-cols-7 gap-2">
-            {calendarCells.map((cell, i) =>
-              cell ? (
-                <div
-                  key={i}
-                  className="bg-gray-800 rounded-xl p-2 text-center flex flex-col items-center justify-center"
+          <div className="grid grid-cols-7 gap-y-1 text-sm mt-1">
+            {Array.from({ length: firstWeekday }).map((_, idx) => (
+              <div key={`empty-${idx}`} />
+            ))}
+
+            {Array.from({ length: daysInMonth }, (_, i) => {
+              const dayNum = i + 1;
+              const key = toDateKey(
+                new Date(currentYear, currentMonth, dayNum)
+              );
+              const isSelected = key === selectedDate;
+              const emoji = intensityEmojiForDay(dayNum);
+
+              return (
+                <button
+                  key={dayNum}
+                  onClick={() => handleDayClick(dayNum)}
+                  className={`mx-1 my-1 rounded-2xl py-2 ${
+                    isSelected
+                      ? "bg-teal-500 text-gray-900"
+                      : "bg-gray-800"
+                  }`}
                 >
-                  <span className="text-sm">{cell.day}</span>
-                  <span className="text-lg mt-1">{cell.emoji}</span>
-                </div>
-              ) : (
-                <div key={i}></div>
-              )
-            )}
+                  {dayNum} {emoji}
+                </button>
+              );
+            })}
           </div>
-        </div>
+        </section>
 
-        {/* ✅ WORKOUT LIST (UNCHANGED but CLEANER) */}
-        <div className="md:col-span-2 space-y-6">
-          <h2 className="text-2xl font-bold text-teal-400">
-            📓 My Workouts
-          </h2>
-
-          {workouts.map((w) => (
-            <div
-              key={w.id}
-              className="bg-gray-900 border border-gray-700 rounded-xl p-6 flex justify-between items-center hover:border-teal-500/40 transition-all"
-            >
-              <div>
-                <h4 className="font-bold text-xl mb-1">
-                  {w.exercise}
-                </h4>
-
-                <p className="text-sm text-gray-400">
-                  {w.sets} sets × {w.reps} reps{" "}
-                  {w.weight && (
-                    <span className="ml-2 text-teal-500 font-bold">
-                      @ {w.weight}kg
-                    </span>
-                  )}
-                </p>
-
-                <p className="text-xs text-gray-500 mt-1">
-                  {new Date(w.created_at).toLocaleString()}
-                </p>
-              </div>
-
-              <button
-                onClick={() => deleteWorkout(w.id)}
-                className="text-red-400 hover:text-red-300 bg-red-900/20 px-4 py-2 rounded-lg"
-              >
-                Delete
-              </button>
+        {/* RIGHT: WORKOUT LIST */}
+        <section className="lg:col-span-2 bg-gray-900 rounded-3xl border border-gray-800 p-6">
+          {selectedDayWorkouts.map((w) => (
+            <div key={w.id} className="bg-gray-800 p-4 mb-3 rounded-xl">
+              <p className="font-semibold">{w.exercise}</p>
+              <p className="text-sm text-gray-400">
+                {w.sets} × {w.reps} {w.weight ? `@ ${w.weight}kg` : ""}
+              </p>
             </div>
           ))}
-        </div>
-
-      </div>
+        </section>
+      </main>
     </div>
   );
 };
