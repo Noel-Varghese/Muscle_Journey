@@ -2,9 +2,9 @@ import cloudinary
 import cloudinary.uploader
 import cloudinary.api
 
-cloud_name="danl7rzl3"
-api_key="324987929651618"
-api_secret="HbXJobzwsjwu9e6Kp4ORRNOf8hc"
+cloud_name="YOUR-CLOUDINARY-NAME"
+api_key="YOUR-API-KEY"
+api_secret="YOUR-API-SECRET"
 
 cloudinary.config(
     cloud_name=cloud_name,
